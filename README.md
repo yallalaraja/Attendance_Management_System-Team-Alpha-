@@ -1,40 +1,40 @@
-Absolutely! Here's a clean and structured `README.md` for your **Attendance Management System (AMS)** project. This will include project description, setup, technologies, and branch info based on your sprint and team structure.
+Here’s a cleaner and neater version of your README file, formatted for clarity and professional presentation:
 
 ---
 
 ```markdown
-# 🕒 Attendance Management System - Backend
+# 🕒 Attendance Management System – Backend
 
-A robust backend system for managing employee attendance, leave, shifts, and reporting, built using **Django** and **PostgreSQL** with **JWT Authentication**.
+A robust backend system to manage employee attendance, leaves, shifts, and reporting, built using **Django** and **PostgreSQL** with secure **JWT Authentication**.
 
 ---
 
-## 📌 Features
+## 🚀 Features
 
-- JWT-based Login & Register APIs
+- JWT-based login/register API
 - Role-Based Access Control (Admin, Manager, Employee)
-- Attendance Model with daily records and validations
-- Leave Management System with approval logic
-- Shift & Holiday tracking
-- Filterable Report API for attendance insights
-- Pagination, standardized API responses
-- Swagger API Documentation
-- End-to-End Testing
+- Attendance tracking with validations
+- Leave management system with approval flow
+- Shift and Holiday management
+- Filterable reports with pagination
+- Standardized API responses
+- Swagger API documentation
+- End-to-end testing
 
 ---
 
 ## 🧱 Tech Stack
 
-- **Backend Framework**: Django + Django REST Framework
-- **Authentication**: JWT (SimpleJWT)
+- **Framework**: Django, Django REST Framework
 - **Database**: PostgreSQL
-- **Documentation**: Swagger (drf-yasg)
+- **Authentication**: JWT (SimpleJWT)
+- **Docs**: Swagger (drf-yasg)
 - **Testing**: Django Test Framework
-- **Others**: Git, Postman, Pre-commit hooks
+- **Others**: Git, Postman, Pre-commit Hooks
 
 ---
 
-## 📁 Project Setup
+## 🛠️ Project Setup
 
 ### 1. Clone the Repository
 
@@ -43,17 +43,18 @@ git clone https://github.com/yallalaraja/Attendance_Management_System-Team-Alpha
 cd Attendance_Management_System-Team-Alpha-
 ```
 
-### 2. Create Virtual Environment & Install Dependencies
+### 2. Setup Virtual Environment
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
+# Windows: venv\Scripts\activate
+# Linux/Mac:  source venv/bin/activate 
 pip install -r requirements.txt
 ```
 
-### 3. Setup PostgreSQL Database
+### 3. Configure PostgreSQL Database
 
-Ensure PostgreSQL is running. In `settings.py`, update:
+Update `settings.py` with your PostgreSQL credentials:
 
 ```python
 DATABASES = {
@@ -83,32 +84,32 @@ python manage.py runserver
 
 ---
 
-## 🛡️ Authentication
+## 🔐 Authentication
 
-- Uses **SimpleJWT** for token-based login.
-- Access & Refresh tokens provided on login.
-- Role-based permissions enforced for sensitive APIs.
-
----
-
-## 🔀 Git Branches & Contributions
-
-| Branch Name            | Features                            | Assigned To    |
-|------------------------|--------------------------------------|----------------|
-| `dev-setup`            | Project, DB, pre-commit              | Raja           |
-| `dev-auth`             | JWT Auth, login/register, roles      | Kranthi        |
-| `dev-attendance`       | Attendance APIs & logic              | Srikanth       |
-| `dev-leave`            | Leave APIs, approvals                | Vijitha        |
-| `dev-shifts-holidays`  | Shift, Holiday APIs                  | Ramu           |
-| `dev-report-docs`      | Reports, Swagger, final docs         | Harsha         |
-
-> All branches are merged into `main` after peer review and testing.
+- Uses **SimpleJWT** for token-based login
+- Returns both access and refresh tokens
+- Role-based permissions are enforced per endpoint
 
 ---
 
-## 📮 API Documentation
+## 🌿 Branch Structure & Contributors
 
-Once server is running, Swagger UI is available at:
+| Branch Name           | Description                         | Assigned To  |
+|-----------------------|-------------------------------------|--------------|
+| `dev-setup`           | Django project, DB setup            | Raja         |
+| `dev-auth`            | Auth system, login/register, roles  | Kranthi      |
+| `dev-attendance`      | Attendance APIs & logic             | Srikanth     |
+| `dev-leave`           | Leave APIs, approval logic          | Vijitha      |
+| `dev-shifts-holidays` | Shifts and Holiday models/APIs      | Ramu         |
+| `dev-report-docs`     | Reports, Swagger, Postman, cleanup  | Harsha       |
+
+✅ All features are merged into `main` after review & testing.
+
+---
+
+## 📄 API Documentation
+
+Access Swagger docs at:
 
 ```
 http://localhost:8000/swagger/
@@ -116,30 +117,34 @@ http://localhost:8000/swagger/
 
 ---
 
-## 📫 Postman
+## 📬 Postman
 
-Postman collection is included under `docs/postman_collection.json`.
+Find the Postman collection at:
+
+```
+docs/postman_collection.json
+```
 
 ---
 
-## ✅ Final Steps
+## ✅ Final Checklist
 
 - Run tests: `python manage.py test`
-- Code formatting: Pre-commit hooks ensure clean code
-- All API responses follow a standard structure for ease of frontend integration.
+- Ensure clean code: pre-commit hooks
+- All responses follow a standard API format
 
 ---
 
-## 👨‍💻 Team
+## 👨‍💻 Team Alpha
 
-- **Raja** – Project Setup, Environment, Docs
-- **Kranthi** – Auth, Login, Roles
-- **Srikanth** – Attendance APIs
-- **Vijitha** – Leave Management
-- **Ramu** – Shifts & Holidays
-- **Harsha** – Reports, Testing, Swagger
+- **Raja** – Project setup, environment, docs
+- **Kranthi** – Auth, login, roles
+- **Srikanth** – Attendance management
+- **Vijitha** – Leave workflows
+- **Ramu** – Shifts & holidays
+- **Harsha** – Reports, Swagger, testing
 
 ---
 
-### Happy Building! 🚀
+**Happy coding!** 🚀
 ```
