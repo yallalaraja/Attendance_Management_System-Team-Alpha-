@@ -1,8 +1,4 @@
-Here’s a cleaner and neater version of your README file, formatted for clarity and professional presentation:
 
----
-
-```markdown
 # 🕒 Attendance Management System – Backend
 
 A robust backend system to manage employee attendance, leaves, shifts, and reporting, built using **Django** and **PostgreSQL** with secure **JWT Authentication**.
