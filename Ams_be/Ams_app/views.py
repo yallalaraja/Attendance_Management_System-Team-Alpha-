@@ -1,17 +1,3 @@
-# from django.shortcuts import render
-# from django.http import HttpResponse
-
-# # Create your views here.
-# def home(request):
-#     return HttpResponse("Welcome to the Attendance Management System!")
-
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import LeaveRequest
-from .serializers import LeaveRequestSerializer
-from .permissions import IsOwnerOrManager
-
 class LeaveRequestViewSet(viewsets.ModelViewSet):
     queryset = LeaveRequest.objects.all()
     serializer_class = LeaveRequestSerializer
@@ -46,4 +32,3 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             return Response(self.get_serializer(leave_request).data)
 
         return super().update(request, *args, **kwargs)
-
