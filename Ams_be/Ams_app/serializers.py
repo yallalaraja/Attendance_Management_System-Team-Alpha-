@@ -1,10 +1,8 @@
-
-# Ams_app/serializers.py
 from rest_framework import serializers
-from .models import Attendance
+from .models import LeaveRequest
 
-class AttendanceReportSerializer(serializers.ModelSerializer):
+class LeaveRequestSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Attendance
-        fields = ['date', 'check_in', 'check_out', 'status']
-
+        model = LeaveRequest
+        fields = '__all__'
+        read_only_fields = ['employee', 'status', 'applied_at', 'approved_by']
