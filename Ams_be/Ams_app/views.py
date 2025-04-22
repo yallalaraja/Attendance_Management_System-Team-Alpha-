@@ -1,34 +1,15 @@
-class LeaveRequestViewSet(viewsets.ModelViewSet):
-    queryset = LeaveRequest.objects.all()
-    serializer_class = LeaveRequestSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrManager]
+# employee_management_app/views.py
 
-    def get_queryset(self):
-        user = self.request.user
-        employee = user.employee
-        
-        if employee.role == 'Manager':
-            # Manager sees all leave requests
-            return LeaveRequest.objects.all()
-        else:
-            # Employee sees only their own leave requests
-            return LeaveRequest.objects.filter(employee=employee)
+from rest_framework import generics, permissions
+from .models import User
+from .serializers import UserSerializer
 
-    def perform_create(self, serializer):
-        # Automatically assign current user as the employee applying for leave
-        serializer.save(employee=self.request.user.employee)
+class UserCreateView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]  # Allow open registration
 
-    def update(self, request, *args, **kwargs):
-        leave_request = self.get_object()
-        new_status = request.data.get('status')
-
-        # Only managers can approve/reject
-        if new_status in ['Approved', 'Rejected']:
-            if request.user.employee.role != 'Manager':
-                return Response({"error": "Only managers can approve or reject leave."}, status=403)
-            leave_request.status = new_status
-            leave_request.approved_by = request.user.employee
-            leave_request.save()
-            return Response(self.get_serializer(leave_request).data)
-
-        return super().update(request, *args, **kwargs)
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
