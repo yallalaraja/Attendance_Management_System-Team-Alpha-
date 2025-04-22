@@ -140,7 +140,4 @@ docs/postman_collection.json
 - **Ramu** – Shifts & holidays
 - **Harsha** – Reports, Swagger, testing
 
----
-
 **Happy coding!** 🚀
-```
