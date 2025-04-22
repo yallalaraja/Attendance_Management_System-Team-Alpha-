@@ -1,6 +1,12 @@
 from django.urls import path
-from . import views  # or specific views
+from .views import (
+    LeaveRequestListCreateView,
+    LeaveRequestDetailView,
+    LeaveApprovalView,
+)
 
 urlpatterns = [
-    # add your paths here
+    path('leave/', LeaveRequestListCreateView.as_view(), name='leave-list-create'),
+    path('leave/<int:pk>/', LeaveRequestDetailView.as_view(), name='leave-detail'),
+    path('leave/<int:pk>/approve/', LeaveApprovalView.as_view(), name='leave-approval'),
 ]
