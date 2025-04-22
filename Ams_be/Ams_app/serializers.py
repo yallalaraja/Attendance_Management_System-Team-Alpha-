@@ -1,13 +1,9 @@
 
+from rest_framework import serializers
+from .models import LeaveRequest
 
-
-class ShiftSerializer(serializers.ModelSerializer):
+class LeaveRequestSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Shift
+        model = LeaveRequest
         fields = '__all__'
-
-
-class HolidaySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Holiday
-        fields = '__all__'
+        read_only_fields = ['employee', 'approved_by', 'status']
