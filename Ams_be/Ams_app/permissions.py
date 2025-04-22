@@ -1,8 +1,14 @@
-# Ams_app/permissions.py
-from rest_framework.permissions import BasePermission
+from rest_framework import permissions
 
-class IsAdminOrManager(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and (
-            request.user.is_staff or getattr(request.user, 'role', '') in ['Admin', 'Manager']
+class IsAdminOrManagerOrSelf(permissions.BasePermission):
+    """
+    Allows access to admins, managers, or the employee themself.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Allow staff (admin), the approving manager, or the employee themselves
+        return (
+            request.user.is_staff or
+            request.user.role == 'Manager' or
+            obj.employee == request.user
         )
