@@ -1,13 +1,15 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+# employee_management_app/permissions.py
 
-class IsOwnerOrManager(BasePermission):
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        emp = getattr(user, 'employee', None)
+from rest_framework.permissions import BasePermission
 
-        # Managers can view/approve/reject all
-        if emp and emp.role == 'Manager':
-            return True
+class IsAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'Admin'
 
-        # Employees can only view or edit their own leaves
-        return obj.employee == emp
+class IsManager(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'Manager'
+
+class IsEmployee(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'Employee'

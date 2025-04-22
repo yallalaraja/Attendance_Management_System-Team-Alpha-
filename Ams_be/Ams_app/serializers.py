@@ -1,9 +1,17 @@
+# employee_management_app/serializers.py
 
 from rest_framework import serializers
-from .models import LeaveRequest
+from .models import User
 
-class LeaveRequestSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = LeaveRequest
-        fields = '__all__'
-        read_only_fields = ['employee', 'approved_by', 'status']
+        model = User
+        fields = ['id', 'email', 'name', 'role', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
