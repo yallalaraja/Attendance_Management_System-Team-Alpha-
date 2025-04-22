@@ -1,5 +1,5 @@
-from rest_framework import permissions
+class IsNotHoliday(BasePermission):
+    message = "Today is a holiday — no need to login or punch in."
 
-class IsAdminOrSelf(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        return request.user.is_staff or obj.user == request.user
+    def has_permission(self, request, view):
+        return not Holiday.objects.filter(date=date.today()).exists()

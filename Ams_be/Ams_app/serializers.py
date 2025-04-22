@@ -1,8 +1,13 @@
-from rest_framework import serializers
-from .models import Attendance
 
-class AttendanceSerializer(serializers.ModelSerializer):
+
+
+class ShiftSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Attendance
+        model = Shift
         fields = '__all__'
-        read_only_fields = ['user']
+
+
+class HolidaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Holiday
+        fields = '__all__'
