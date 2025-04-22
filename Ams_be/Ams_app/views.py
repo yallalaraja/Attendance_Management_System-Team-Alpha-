@@ -1,22 +1,43 @@
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from .models import LeaveRequest
+from .serializers import LeaveRequestSerializer
+from .permissions import IsAdminOrManagerOrSelf
 
-# Ams_app/views.py
-from datetime import timedelta
-from django.utils import timezone
-from rest_framework import generics, permissions
-from rest_framework.exceptions import PermissionDenied
-
-from .models import Attendance
-from .serializers import AttendanceReportSerializer
-from .permissions import IsAdminOrManager
-
-class AttendanceReportView(generics.ListAPIView):
-    serializer_class = AttendanceReportSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminOrManager]
+class LeaveRequestListCreateView(generics.ListCreateAPIView):
+    serializer_class = LeaveRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        employee_id = self.request.query_params.get('employee_id')
-        if not employee_id:
-            raise PermissionDenied("Please provide an employee_id in query params.")
+        user = self.request.user
+        if user.role == 'Admin' or user.role == 'Manager':
+            return LeaveRequest.objects.all()
+        return LeaveRequest.objects.filter(employee=user)
 
-        last_30_days = timezone.now().date() - timedelta(days=30)
-        return Attendance.objects.filter(user__id=employee_id, date__gte=last_30_days)
+    def perform_create(self, serializer):
+        serializer.save(employee=self.request.user)
+
+class LeaveRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = LeaveRequest.objects.all()
+    serializer_class = LeaveRequestSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminOrManagerOrSelf]
+
+class LeaveApprovalView(generics.UpdateAPIView):
+    queryset = LeaveRequest.objects.all()
+    serializer_class = LeaveRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        leave = self.get_object()
+
+        if request.user.role != 'Manager':
+            return Response({'detail': 'Only managers can approve/reject leaves.'}, status=status.HTTP_403_FORBIDDEN)
+
+        status_value = request.data.get('status')
+        if status_value not in ['Approved', 'Rejected']:
+            return Response({'detail': 'Invalid status.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        leave.status = status_value
+        leave.approved_by = request.user
+        leave.save()
+        return Response({'detail': f'Leave {status_value.lower()}.'})
