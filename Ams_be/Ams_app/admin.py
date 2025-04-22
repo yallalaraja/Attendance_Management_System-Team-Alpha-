@@ -1,5 +1,6 @@
+# admin.py
 from django.contrib import admin
-
+from .models import Holiday, Shift
 from django.contrib import admin
 from .models import Employee, LeaveRequest
 
