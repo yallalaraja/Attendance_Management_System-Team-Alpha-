@@ -1,5 +1,6 @@
 
 
+
 class ShiftSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift

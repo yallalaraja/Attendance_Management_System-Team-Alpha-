@@ -1,4 +1,3 @@
-
 class IsNotHoliday(BasePermission):
     message = "Today is a holiday — no need to login or punch in."
 
