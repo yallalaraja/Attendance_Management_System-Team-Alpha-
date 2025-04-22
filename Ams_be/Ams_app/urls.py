@@ -1,6 +1,7 @@
 from django.urls import path
-from . import views  # or specific views
+from .views import AttendanceListCreateView, AttendanceDetailView
 
 urlpatterns = [
-    # add your paths here
+    path('attendance/', AttendanceListCreateView.as_view(), name='attendance-list-create'),
+    path('attendance/<int:pk>/', AttendanceDetailView.as_view(), name='attendance-detail'),
 ]
