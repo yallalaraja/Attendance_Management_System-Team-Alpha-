@@ -1,22 +1,23 @@
-
-# Ams_app/views.py
-from datetime import timedelta
-from django.utils import timezone
 from rest_framework import generics, permissions
-from rest_framework.exceptions import PermissionDenied
-
 from .models import Attendance
-from .serializers import AttendanceReportSerializer
-from .permissions import IsAdminOrManager
+from .serializers import AttendanceSerializer
+from .permissions import IsAdminOrSelf
 
-class AttendanceReportView(generics.ListAPIView):
-    serializer_class = AttendanceReportSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminOrManager]
+class AttendanceListCreateView(generics.ListCreateAPIView):
+    queryset = Attendance.objects.all()
+    serializer_class = AttendanceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
     def get_queryset(self):
-        employee_id = self.request.query_params.get('employee_id')
-        if not employee_id:
-            raise PermissionDenied("Please provide an employee_id in query params.")
+        user = self.request.user
+        if user.is_staff:
+            return Attendance.objects.all()
+        return Attendance.objects.filter(user=user)
 
-        last_30_days = timezone.now().date() - timedelta(days=30)
-        return Attendance.objects.filter(user__id=employee_id, date__gte=last_30_days)
+class AttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Attendance.objects.all()
+    serializer_class = AttendanceSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminOrSelf]
