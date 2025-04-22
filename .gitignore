@@ -1,6 +1,9 @@
-/myenv
+# Ignore Python virtual environment
+myenv/
 
-# Byte-compiled / optimized / DLL files
-__pycache__/
+# Ignore bytecode and cache
+**__pycache__/
 *.py[cod]
 
+# Ignore all migrations folders
+**/migrations/

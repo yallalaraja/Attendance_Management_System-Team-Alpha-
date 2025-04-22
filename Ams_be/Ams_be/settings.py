@@ -133,3 +133,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+# settings.py
+AUTH_USER_MODEL = 'Ams_app.User'  # Use your app name and custom model name
