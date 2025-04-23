@@ -42,7 +42,8 @@ cd Attendance_Management_System-Team-Alpha-
 ### 2. Setup Virtual Environment
 
 ```bash
-python -m venv venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass (for any permissions use that command)
+python -m venv myenv
 # Windows: venv\Scripts\activate
 # Linux/Mac:  source venv/bin/activate 
 pip install -r requirements.txt

@@ -1,199 +1,162 @@
+import pytz
 from django.db import models
-from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.utils import timezone
-import datetime
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils.timezone import now
+from datetime import datetime
+from datetime import datetime, time
 
-class Department(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return self.name
-    
-    class Meta:
-        ordering = ['name']
+IST = pytz.timezone('Asia/Kolkata')
 
-class Employee(models.Model):
-    GENDER_CHOICES = [
-        ('M', 'Male'),
-        ('F', 'Female'),
-        ('O', 'Other'),
-    ]
-    
-    STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('inactive', 'Inactive'),
-        ('on_leave', 'On Leave'),
-    ]
-    
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile')
-    employee_id = models.CharField(max_length=20, unique=True)
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees')
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=15, blank=True)
-    date_of_birth = models.DateField()
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
-    address = models.TextField()
-    joining_date = models.DateField()
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.employee_id})"
-    
-    class Meta:
-        ordering = ['first_name', 'last_name']
+class UserManager(BaseUserManager):
+    def create_user(self, email, name, role='Employee', password=None):
+        if not email:
+            raise ValueError("Email is required")
+        email = self.normalize_email(email)
+        user = self.model(email=email, name=name, role=role)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, name, password):
+        user = self.create_user(email=email, name=name, role='Admin', password=password)
+        user.is_staff = True
+        user.is_superuser = True
+        user.save(using=self._db)
+        return user
+
 
 class Shift(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
     start_time = models.TimeField()
     end_time = models.TimeField()
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
+    is_active = models.BooleanField(default=True)
+
     def __str__(self):
-        return f"{self.name} ({self.start_time} - {self.end_time})"
-    
-    class Meta:
-        ordering = ['start_time']
+        return self.name
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    ROLE_CHOICES = (
+        ('Admin', 'Admin'),
+        ('Manager', 'Manager'),
+        ('Employee', 'Employee'),
+    )
+
+    email = models.EmailField(unique=True)
+    name = models.CharField(max_length=255)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='Employee')
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    shift = models.ForeignKey(Shift, null=True, blank=True, on_delete=models.SET_NULL, related_name='users')
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['name']
+
+    def __str__(self):
+        return self.email
+
 
 class Attendance(models.Model):
     STATUS_CHOICES = [
-        ('present', 'Present'),
-        ('absent', 'Absent'),
-        ('late', 'Late'),
-        ('half_day', 'Half Day'),
-        ('work_from_home', 'Work From Home'),
+        ('Present', 'Present'),
+        ('Absent', 'Absent'),
+        ('On Leave', 'On Leave'),
     ]
-    
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendances')
-    date = models.DateField(default=timezone.now)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES)
+
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
+    date = models.DateField()
     check_in = models.TimeField(null=True, blank=True)
     check_out = models.TimeField(null=True, blank=True)
-    shift = models.ForeignKey(Shift, on_delete=models.SET_NULL, null=True, blank=True)
-    notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ['employee', 'date']
-        ordering = ['-date', 'employee']
-    
-    def __str__(self):
-        return f"{self.employee} - {self.date} - {self.status}"
-    
-    def calculate_work_hours(self):
-        if self.check_in and self.check_out:
-            check_in_dt = datetime.datetime.combine(self.date, self.check_in)
-            check_out_dt = datetime.datetime.combine(self.date, self.check_out)
-            duration = check_out_dt - check_in_dt
-            return duration.total_seconds() / 3600  # Convert to hours
-        return 0
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
 
-class Leave(models.Model):
-    LEAVE_TYPES = [
-        ('sick', 'Sick Leave'),
-        ('casual', 'Casual Leave'),
-        ('annual', 'Annual Leave'),
-        ('maternity', 'Maternity Leave'),
-        ('paternity', 'Paternity Leave'),
-        ('unpaid', 'Unpaid Leave'),
-        ('other', 'Other'),
-    ]
-    
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('cancelled', 'Cancelled'),
-    ]
-    
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leaves')
-    leave_type = models.CharField(max_length=15, choices=LEAVE_TYPES)
+    class Meta:
+        unique_together = ('user', 'date')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user} - {self.date} - {self.status}"
+
+
+
+    def get_total_hours(self):
+        if self.check_in and self.check_out:
+            # Combine date and time, then localize to IST
+            check_in_dt = IST.localize(datetime.combine(self.date, self.check_in))
+            check_out_dt = IST.localize(datetime.combine(self.date, self.check_out))
+            
+            duration = check_out_dt - check_in_dt
+            hours = duration.seconds // 3600
+            minutes = (duration.seconds % 3600) // 60
+            seconds = duration.seconds % 60
+            return f"{hours} hours, {minutes} minutes, {seconds} seconds"
+        return "N/A"
+
+
+    def mark_check_in(self):
+        """Mark current time as check-in if not already marked"""
+        if not self.check_in:
+            self.check_in = now().time()
+            self.status = 'Present'
+            self.save()
+
+    def mark_check_out(self):
+        """Mark current time as check-out if not already marked"""
+        if not self.check_out:
+            self.check_out = now().time()
+            self.save()
+
+class LeaveRequest(models.Model):
+    LEAVE_STATUS = (
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+    )
+
+    LEAVE_TYPE = (
+        ('Sick', 'Sick'),
+        ('Casual', 'Casual'),
+        ('Lop', 'Lop'),
+    )
+
+    employee = models.ForeignKey(User, on_delete=models.CASCADE)
+    leave_type = models.CharField(max_length=20, choices=LEAVE_TYPE)
     start_date = models.DateField()
     end_date = models.DateField()
     reason = models.TextField()
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=LEAVE_STATUS, default='Pending')
+    applied_at = models.DateTimeField(auto_now_add=True)
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_leaves')
-    approved_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return f"{self.employee} - {self.leave_type} ({self.start_date} to {self.end_date})"
-    
-    def duration(self):
-        return (self.end_date - self.start_date).days + 1
-    
-    class Meta:
-        ordering = ['-created_at']
+
+    def clean(self):
+        # Ensure that the employee cannot approve their own leave request
+        if self.approved_by == self.employee:
+            raise ValidationError("An employee cannot approve their own leave request.")
+
+    def save(self, *args, **kwargs):
+        # Call clean method to validate the condition before saving
+        self.clean()
+        super().save(*args, **kwargs)
+
 
 class Holiday(models.Model):
     name = models.CharField(max_length=100)
+    start_date = models.DateField(unique=True)
+    end_date = models.DateField(unique=True)
+    description = models.TextField()
+
+    def __str__(self):
+        return f"{self.name} from {self.start_date} to {self.end_date}"
+
+
+class UserShiftAssignment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
     date = models.DateField()
-    description = models.TextField(blank=True)
-    is_mandatory = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return f"{self.name} - {self.date}"
-    
-    class Meta:
-        ordering = ['date']
 
-class AttendanceReport(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_reports')
-    month = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
-    year = models.IntegerField(validators=[MinValueValidator(2000)])
-    total_working_days = models.IntegerField()
-    days_present = models.IntegerField()
-    days_absent = models.IntegerField()
-    days_late = models.IntegerField()
-    total_leave_days = models.IntegerField()
-    total_work_hours = models.FloatField()
-    generated_at = models.DateTimeField(auto_now_add=True)
-    
     class Meta:
-        unique_together = ['employee', 'month', 'year']
-        ordering = ['-year', '-month', 'employee']
-    
-    def __str__(self):
-        return f"{self.employee} - {self.month}/{self.year}"
-    
-    def attendance_percentage(self):
-        if self.total_working_days > 0:
-            return (self.days_present / self.total_working_days) * 100
-        return 0
+        unique_together = ('user', 'date')
 
-class Notification(models.Model):
-    NOTIFICATION_TYPES = [
-        ('leave_request', 'Leave Request'),
-        ('leave_approved', 'Leave Approved'),
-        ('leave_rejected', 'Leave Rejected'),
-        ('attendance_reminder', 'Attendance Reminder'),
-        ('late_arrival', 'Late Arrival'),
-        ('other', 'Other'),
-    ]
-    
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
-    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_notifications')
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
-    title = models.CharField(max_length=200)
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
     def __str__(self):
-        return f"{self.notification_type} - {self.recipient.username}"
+        return f"{self.user.name} → {self.shift.name} on {self.date}"
