@@ -80,3 +80,13 @@ class IsWithinAssignedShiftTime(BasePermission):
             return False  # No shift assigned today
 
         return shift.start_time <= now <= shift.end_time
+    
+class IsAdminUserForList(BasePermission):
+    """
+    Custom permission to only allow admins to view the leave request list.
+    """
+    def has_permission(self, request, view):
+        if view.action == 'list':
+            print(f"Authenticated user: {request.user}, is_staff: {request.user.is_staff}")
+            return request.user and request.user.is_staff
+        return True

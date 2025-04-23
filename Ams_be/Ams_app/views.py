@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from django.utils.timezone import now
 from .models import Attendance, User, LeaveRequest, Shift, UserShiftAssignment,Holiday
 from .serializers import AttendanceSerializer, LeaveRequestSerializer, ShiftSerializer, UserShiftAssignmentSerializer,UserSerializer,HolidaySerializer
-from .permissions import IsAdminOrHR,IsWithinAssignedShiftTime,IsEmployee
+from .permissions import IsAdminOrHR,IsWithinAssignedShiftTime,IsEmployee,IsAdminUserForList
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -87,13 +87,41 @@ class AttendanceReportViewSet(viewsets.ViewSet):
 
 # ----- Leave Request Views ----- #
 
+# class LeaveRequestViewSet(viewsets.ModelViewSet):
+#     permission_classes = [IsAuthenticated]
+#     queryset = LeaveRequest.objects.all()
+#     serializer_class = LeaveRequestSerializer
+
+#     def perform_create(self, serializer):
+#         serializer.save(employee=self.request.user)
+
+
 class LeaveRequestViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsEmployee]
+    permission_classes = [IsAuthenticated, IsAdminUserForList]  # Custom permission for 'list' action
     queryset = LeaveRequest.objects.all()
     serializer_class = LeaveRequestSerializer
 
     def perform_create(self, serializer):
+        # Save the leave request with the logged-in user as the employee
         serializer.save(employee=self.request.user)
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned leave requests to the current user.
+        """
+        queryset = LeaveRequest.objects.all()
+        if self.request.user.is_authenticated:
+            # Restrict to the logged-in user's leave requests unless the user is admin
+            if not self.request.user.is_staff:
+                queryset = queryset.filter(employee=self.request.user)
+        return queryset
+
+    def perform_update(self, serializer):
+        # Set the 'approved_by' field when the leave request is approved
+        if self.request.user.is_staff and 'status' in self.request.data and self.request.data['status'] == 'Approved':
+            serializer.save(approved_by=self.request.user)  # Set the 'approved_by' field to the HR user
+        else:
+            super().perform_update(serializer)
 
 
 class LeaveRequestAdminViewSet(viewsets.ModelViewSet):
@@ -146,3 +174,4 @@ class ShiftAssignmentCheckViewSet(viewsets.ViewSet):
 class HolidayViewSet(viewsets.ModelViewSet):
     queryset = Holiday.objects.all()
     serializer_class = HolidaySerializer
+    permission_classes = [IsAuthenticated, IsAdminOrHR]
