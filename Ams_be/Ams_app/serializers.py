@@ -27,6 +27,18 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['employee', 'status', 'applied_at', 'approved_by']
 
+class LeaveRequestApproveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LeaveRequest
+        fields = ['status']
+
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+        if validated_data.get('status') == 'Approved':
+            if instance.employee == request.user:
+                raise serializers.ValidationError("Employees can't approve their own leave.")
+            instance.approved_by = request.user
+        return super().update(instance, validated_data)
 
 # ---------- Shift Serializer ----------
 

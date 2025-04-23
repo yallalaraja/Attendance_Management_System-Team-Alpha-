@@ -1,7 +1,11 @@
+import pytz
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils.timezone import now
 from datetime import datetime
+from datetime import datetime, time
+
+IST = pytz.timezone('Asia/Kolkata')
 
 class UserManager(BaseUserManager):
     def create_user(self, email, name, role='Employee', password=None):
@@ -72,18 +76,23 @@ class Attendance(models.Model):
         ordering = ['-date']
 
     def __str__(self):
-        return f"{self.user.name} - {self.date} - {self.status}"
+        return f"{self.user} - {self.date} - {self.status}"
+
+
 
     def get_total_hours(self):
         if self.check_in and self.check_out:
-            check_in_dt = datetime.combine(self.date, self.check_in)
-            check_out_dt = datetime.combine(self.date, self.check_out)
+            # Combine date and time, then localize to IST
+            check_in_dt = IST.localize(datetime.combine(self.date, self.check_in))
+            check_out_dt = IST.localize(datetime.combine(self.date, self.check_out))
+            
             duration = check_out_dt - check_in_dt
             hours = duration.seconds // 3600
             minutes = (duration.seconds % 3600) // 60
             seconds = duration.seconds % 60
             return f"{hours} hours, {minutes} minutes, {seconds} seconds"
         return "N/A"
+
 
     def mark_check_in(self):
         """Mark current time as check-in if not already marked"""
@@ -97,10 +106,6 @@ class Attendance(models.Model):
         if not self.check_out:
             self.check_out = now().time()
             self.save()
-
-
-from django.core.exceptions import ValidationError
-from django.db import models
 
 class LeaveRequest(models.Model):
     LEAVE_STATUS = (

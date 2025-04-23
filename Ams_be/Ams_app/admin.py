@@ -24,13 +24,13 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ('user', 'date', 'status', 'check_in', 'check_out')
+    list_display = ('user', 'date', 'status', 'check_in', 'check_out','get_total_hours')
     list_display_links = ('user',)
     list_filter = ('status', 'date')
     search_fields = ('user__email', 'user__name', 'date')
     ordering = ('-date',)
 
-    def get_readonly_fields(self, obj=None):
+    def get_readonly_fields(self,request,obj=None):
         if obj:
             return self.readonly_fields + ('user', 'date', 'check_in', 'check_out', 'status')
         return self.readonly_fields
@@ -44,6 +44,10 @@ class LeaveRequestAdmin(admin.ModelAdmin):
     search_fields = ('employee__email', 'employee__name', 'reason')
     readonly_fields = ('applied_at',)
 
+    def save_model(self, request, obj, form, change):
+        if obj.status == 'Approved' and not obj.approved_by:
+            obj.approved_by = request.user
+        super().save_model(request, obj, form, change)
 
 @admin.register(Holiday)
 class HolidayAdmin(admin.ModelAdmin):
