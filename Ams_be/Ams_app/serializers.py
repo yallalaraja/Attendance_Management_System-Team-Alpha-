@@ -1,14 +1,10 @@
 # Ams_app/serializers.py
-from rest_framework import serializers
-from .models import Attendance,Shift,Holiday
-
-class AttendanceReportSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Attendance
-        fields = ['date', 'check_in', 'check_out', 'status']
 
 from rest_framework import serializers
-from .models import Attendance
+from .models import Attendance, Shift, Holiday, LeaveRequest, User, UserShiftAssignment
+
+
+# ---------- Attendance Serializers ----------
 
 class AttendanceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,8 +12,14 @@ class AttendanceSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['user']
 
-from rest_framework import serializers
-from .models import LeaveRequest
+
+class AttendanceReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attendance
+        fields = ['date', 'check_in', 'check_out', 'status']
+
+
+# ---------- Leave Request Serializer ----------
 
 class LeaveRequestSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,6 +28,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         read_only_fields = ['employee', 'status', 'applied_at', 'approved_by']
 
 
+# ---------- Shift Serializer ----------
 
 class ShiftSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,13 +36,15 @@ class ShiftSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+# ---------- Holiday Serializer ----------
+
 class HolidaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Holiday
         fields = '__all__'
-        
-from rest_framework import serializers
-from .models import User
+
+
+# ---------- User Serializer ----------
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -53,3 +58,15 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+# ---------- User Shift Assignment Serializer ----------
+
+class UserShiftAssignmentSerializer(serializers.ModelSerializer):
+    shift = ShiftSerializer(read_only=True)
+    shift_id = serializers.PrimaryKeyRelatedField(queryset=Shift.objects.all(), source='shift', write_only=True)
+
+    class Meta:
+        model = UserShiftAssignment
+        fields = ['id', 'user', 'date', 'shift', 'shift_id']
+        read_only_fields = ['user']

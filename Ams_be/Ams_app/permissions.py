@@ -1,49 +1,82 @@
 # Ams_app/permissions.py
-from datetime import date
-from rest_framework.permissions import BasePermission
-from .models import Holiday
 
-class IsAdminOrManager(BasePermission):
+from datetime import datetime, date
+from rest_framework import permissions
+from rest_framework.permissions import BasePermission
+from .models import Holiday, UserShiftAssignment
+
+
+# ----- Role-Based Permissions ----- #
+
+class IsAdmin(BasePermission):
+    """Allows access only to Admin users."""
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'Admin'
+
+
+class IsHR(BasePermission):
+    """Allows access only to HR users."""
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'HR'
+
+
+class IsEmployee(BasePermission):
+    """Allows access only to Employee users."""
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'Employee'
+
+
+class IsAdminOrHR(BasePermission):
+    """Allows access to Admin and HR users."""
     def has_permission(self, request, view):
         return request.user.is_authenticated and (
-            request.user.is_staff or getattr(request.user, 'role', '') in ['Admin', 'HR']
+            request.user.is_staff or request.user.role in ['Admin', 'HR']
         )
-    
-from rest_framework import permissions
 
-class IsAdminOrSelf(permissions.BasePermission):
+
+# ----- Object-Level Permissions ----- #
+
+class IsAdminOrSelf(BasePermission):
+    """Allows Admin users or the user themselves to access the object."""
     def has_object_permission(self, request, view, obj):
         return request.user.is_staff or obj.user == request.user
-    
-from rest_framework import permissions
 
-class IsAdminOrManagerOrSelf(permissions.BasePermission):
+
+class IsAdminHRorSelf(BasePermission):
+    """Allows Admin, HR, or the employee themselves to access the object."""
     def has_object_permission(self, request, view, obj):
-        # Allow staff (admin), the approving manager, or the employee themselves
         return (
             request.user.is_staff or
             request.user.role == 'HR' or
             obj.employee == request.user
         )
-    
+
+
+# ----- Special Condition Permissions ----- #
 
 class IsNotHoliday(BasePermission):
-    message = "Today is a holiday — no need to login or punch in."
-
+    """Allows actions only on non-holiday days."""
     def has_permission(self, request, view):
-        return not Holiday.objects.filter(date=date.today()).exists()
-    
+        today = date.today()
+        return not Holiday.objects.filter(start_date__lte=today, end_date__gte=today).exists()
 
-from rest_framework.permissions import BasePermission
 
-class IsAdmin(BasePermission):
+class IsWithinAssignedShiftTime(BasePermission):
+    """
+    Allows action only if the current time falls within the user's assigned shift for today.
+    """
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'Admin'
+        if not request.user.is_authenticated:
+            return False
 
-class IsHR(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'HR'
+        now = datetime.now().time()
+        today = date.today()
 
-class IsEmployee(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'Employee'
+        # Get today's shift assignment
+        try:
+            shift_assignment = UserShiftAssignment.objects.get(user=request.user, date=today)
+            shift = shift_assignment.shift
+        except UserShiftAssignment.DoesNotExist:
+            return False  # No shift assigned today
+
+        return shift.start_time <= now <= shift.end_time

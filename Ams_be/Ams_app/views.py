@@ -1,106 +1,148 @@
-# Ams_app/views.py
-from datetime import timedelta
-from django.utils import timezone
-from rest_framework import generics, permissions,viewsets
-from rest_framework.exceptions import PermissionDenied
-from .models import Attendance,LeaveRequest,Shift,Holiday
-from .serializers import AttendanceReportSerializer,AttendanceSerializer,LeaveRequestSerializer,ShiftSerializer,HolidaySerializer
-from .permissions import IsAdminOrManager,IsAdminOrSelf,IsAdminOrManagerOrSelf,IsNotHoliday
+from datetime import datetime, date, timedelta
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.utils.timezone import now
+from .models import Attendance, User, LeaveRequest, Shift, UserShiftAssignment,Holiday
+from .serializers import AttendanceSerializer, LeaveRequestSerializer, ShiftSerializer, UserShiftAssignmentSerializer,UserSerializer,HolidaySerializer
+from .permissions import IsAdminOrHR,IsWithinAssignedShiftTime,IsEmployee
 
-class AttendanceReportView(generics.ListAPIView):
-    serializer_class = AttendanceReportSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminOrManager]
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing user instances.
+    Accessible by Admin or HR.
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrHR]
 
-    def get_queryset(self):
-        employee_id = self.request.query_params.get('employee_id')
-        if not employee_id:
-            raise PermissionDenied("Please provide an employee_id in query params.")
+    def perform_update(self, serializer):
+        # You can customize what happens when a user is updated (e.g., logging or special handling)
+        serializer.save()
 
-        last_30_days = timezone.now().date() - timedelta(days=30)
-        return Attendance.objects.filter(user__id=employee_id, date__gte=last_30_days)
-    
-class AttendanceListCreateView(generics.ListCreateAPIView):
-    queryset = Attendance.objects.all()
-    serializer_class = AttendanceSerializer
-    permission_classes = [permissions.IsAuthenticated]
+# ----- Attendance Views ----- #
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+class AttendanceViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated, IsEmployee]
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Attendance.objects.all()
-        return Attendance.objects.filter(user=user)
+    def list(self, request):
+        """
+        List all attendance records for the authenticated employee.
+        """
+        employee = request.user
+        end_date = now().date()
+        start_date = end_date - timedelta(days=30)
 
-class AttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Attendance.objects.all()
-    serializer_class = AttendanceSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminOrSelf]
+        attendance_data = Attendance.objects.filter(user=employee, date__range=(start_date, end_date))
+        serializer = AttendanceSerializer(attendance_data, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        """
+        Check-in or check-out for the authenticated employee.
+        """
+        employee = request.user
+        current_time = now().time()
+        today = date.today()
+
+        try:
+            attendance = Attendance.objects.get(user=employee, date=today)
+            if attendance.check_in and not attendance.check_out:
+                attendance.check_out = current_time
+                attendance.status = 'Checked-Out'
+            else:
+                return Response({"error": "Attendance already recorded for today"}, status=400)
+        except Attendance.DoesNotExist:
+            attendance = Attendance(user=employee, date=today, check_in=current_time, status='Checked-In')
+
+        attendance.save()
+        return Response({"message": "Attendance recorded successfully"}, status=201)
 
 
-class LeaveRequestListCreateView(generics.ListCreateAPIView):
+# ----- Attendance Report Views ----- #
+
+class AttendanceReportViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated, IsAdminOrHR]
+
+    def list(self, request):
+        """
+        Get attendance report for a specific employee (Admin or HR only).
+        """
+        user_id = request.query_params.get("user_id")
+        if not user_id:
+            return Response({"error": "user_id query parameter is required"}, status=400)
+
+        try:
+            employee = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        end_date = now().date()
+        start_date = end_date - timedelta(days=30)
+
+        attendance_data = Attendance.objects.filter(user=employee, date__range=(start_date, end_date))
+        serializer = AttendanceSerializer(attendance_data, many=True)
+        return Response(serializer.data)
+
+
+# ----- Leave Request Views ----- #
+
+class LeaveRequestViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsEmployee]
+    queryset = LeaveRequest.objects.all()
     serializer_class = LeaveRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.role == 'Admin' or user.role == 'HR':
-            return LeaveRequest.objects.all()
-        return LeaveRequest.objects.filter(employee=user)
 
     def perform_create(self, serializer):
         serializer.save(employee=self.request.user)
 
-class LeaveRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
+
+class LeaveRequestAdminViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminOrHR]
     queryset = LeaveRequest.objects.all()
     serializer_class = LeaveRequestSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminOrManagerOrSelf]
 
-class LeaveApprovalView(generics.UpdateAPIView):
-    queryset = LeaveRequest.objects.all()
-    serializer_class = LeaveRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def patch(self, request, *args, **kwargs):
-        leave = self.get_object()
-
-        if request.user.role != 'HR':
-            return Response({'detail': 'Only hr can approve/reject leaves.'}, status=status.HTTP_403_FORBIDDEN)
-
-        status_value = request.data.get('status')
-        if status_value not in ['Approved', 'Rejected']:
-            return Response({'detail': 'Invalid status.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        leave.status = status_value
-        leave.approved_by = request.user
-        leave.save()
-        return Response({'detail': f'Leave {status_value.lower()}.'})
-    
-
+# ----- Shift Views ----- #
 
 class ShiftViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminOrHR]
     queryset = Shift.objects.all()
     serializer_class = ShiftSerializer
-    permission_classes = [IsNotHoliday]
 
 
+# ----- User Shift Assignment Views ----- #
+
+class UserShiftAssignmentViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminOrHR]
+    queryset = UserShiftAssignment.objects.all()
+    serializer_class = UserShiftAssignmentSerializer
+
+
+# ----- Special Condition Views ----- #
+
+class ShiftAssignmentCheckViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated, IsWithinAssignedShiftTime]
+
+    def list(self, request):
+        """
+        Check if the current time is within the assigned shift for the authenticated user.
+        """
+        if not request.user.is_authenticated:
+            return Response({"error": "User not authenticated"}, status=401)
+
+        now_time = datetime.now().time()
+        today = date.today()
+
+        try:
+            shift_assignment = UserShiftAssignment.objects.get(user=request.user, date=today)
+            shift = shift_assignment.shift
+            if shift.start_time <= now_time <= shift.end_time:
+                return Response({"message": "Within assigned shift time"}, status=200)
+            else:
+                return Response({"error": "Not within assigned shift time"}, status=403)
+        except UserShiftAssignment.DoesNotExist:
+            return Response({"error": "No shift assigned today"}, status=404)
+        
 class HolidayViewSet(viewsets.ModelViewSet):
     queryset = Holiday.objects.all()
     serializer_class = HolidaySerializer
-
-# employee_management_app/views.py
-
-from rest_framework import generics, permissions
-from .models import User
-from .serializers import UserSerializer
-
-class UserCreateView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]  # Allow open registration
-
-class UserListView(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAdminUser]

@@ -1,29 +1,29 @@
-# Ams_app/urls.py
-
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import (
-    ShiftViewSet,
-    HolidayViewSet,
-    AttendanceListCreateView,
-    AttendanceDetailView,
-    LeaveRequestListCreateView,
-    LeaveRequestDetailView,
-    LeaveApprovalView,
+from django.urls import path
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,      # For obtaining a pair of access and refresh tokens
+    TokenRefreshView,         # For refreshing the access token using a refresh token
 )
 
-# Router for ViewSets (for Shift & Holiday)
+from rest_framework.routers import DefaultRouter
+from Ams_app.views import (
+    UserViewSet,
+    AttendanceViewSet,
+    LeaveRequestViewSet,
+    AttendanceReportViewSet,
+    ShiftViewSet,
+    HolidayViewSet,
+)
+
 router = DefaultRouter()
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'attendance', AttendanceViewSet, basename='attendance')
+router.register(r'attendance-report', AttendanceReportViewSet, basename='attendance-report')
+router.register(r'leave-requests', LeaveRequestViewSet, basename='leave-request')
 router.register(r'shifts', ShiftViewSet, basename='shift')
 router.register(r'holidays', HolidayViewSet, basename='holiday')
 
+# Include the JWT token views
 urlpatterns = [
-    # DRF router endpoints (/api/shifts/, /api/holidays/)
-    path('', include(router.urls)),
-    # Attendance & Leave Management
-    path('attendance/', AttendanceListCreateView.as_view(), name='attendance-list-create'),
-    path('attendance/<int:pk>/', AttendanceDetailView.as_view(), name='attendance-detail'),
-    path('leave/', LeaveRequestListCreateView.as_view(), name='leave-list-create'),
-    path('leave/<int:pk>/', LeaveRequestDetailView.as_view(), name='leave-detail'),
-    path('leave/<int:pk>/approve/', LeaveApprovalView.as_view(), name='leave-approval'),
-]
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+] + router.urls
