@@ -39,3 +39,5 @@ urlpatterns = [
     path('holiday/', HolidayViewSet.as_view({'get': 'list', 'post': 'create'}), name='holiday_list_create'),
     path('holiday/<int:pk>/', HolidayViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}), name='holiday_manage'),
 ] + router.urls
+
+# urls created
