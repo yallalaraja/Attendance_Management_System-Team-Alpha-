@@ -227,36 +227,65 @@ def login_user(request):
 def home_view(request):
     return render(request, 'ams_app/home.html')
 
+# logout functionality
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
+
+@require_POST
+def logout_user(request):
+    logout(request)
+    return redirect('login')  # Replace 'login' with your actual login view name
+
 # ----- Attendance Views for templates ----- #
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from datetime import timedelta
+from Ams_app.models import Attendance
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from datetime import datetime, date
+from .models import Attendance
+
+
 @login_required
-def attendance_check(request):
+def attendance_status(request):
+    user = request.user
     today = date.today()
-    employee = request.user
-    current_time = now().time()
-    attendance = Attendance.objects.filter(user=employee, date=today).first()
 
-    if request.method == 'POST':
-        if attendance:
-            if not attendance.check_out:
-                attendance.check_out = current_time
-                attendance.status = 'Checked-Out'
-                attendance.save()
+    try:
+        attendance_record = Attendance.objects.get(user=user, date=today)
+        checkin_time = attendance_record.checkin_time
+        checkout_time = attendance_record.checkout_time
+
+        if checkin_time and checkout_time:
+            checkin_datetime = datetime.combine(today, checkin_time)
+            checkout_datetime = datetime.combine(today, checkout_time)
+            duration = checkout_datetime - checkin_datetime
+
+            # Format duration to hours and minutes
+            total_seconds = duration.total_seconds()
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            duration_str = f"{hours}h {minutes}m"
         else:
-            # Create a new attendance record
-            attendance = Attendance(user=employee, date=today, check_in=current_time, status='Checked-In')
-            attendance.save()
+            duration_str = "Not completed"
+    except Attendance.DoesNotExist:
+        checkin_time = None
+        checkout_time = None
+        duration_str = "No record"
 
-    return render(request, 'ams_app/attendance/attendance_check.html', {'attendance': attendance})
+    context = {
+        'user': user,
+        'checkin_time': checkin_time,
+        'checkout_time': checkout_time,
+        'duration': duration_str,
+    }
 
-@login_required
-def attendance_history(request):
-    employee = request.user
-    end_date = now().date()
-    start_date = end_date - timedelta(days=30)  # Get attendance data for the last 30 days
-    attendance_data = Attendance.objects.filter(user=employee, date__range=(start_date, end_date))
+    return render(request, 'ams_app/attendance/status.html', context)
 
-    return render(request, 'ams_app/attendance/history.html', {'attendance_data': attendance_data})
 
 # ----- Leave Request Views for templates ----- #
 

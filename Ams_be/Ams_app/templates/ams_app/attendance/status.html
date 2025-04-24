@@ -1,0 +1,12 @@
+{% extends 'ams_app/base.html' %}
+
+{% block content %}
+<h2>Attendance Status</h2>
+
+<p><strong>User:</strong> {{ user.name }}</p>
+<p><strong>Check-in Time:</strong> {{ checkin_time|default:"Not checked in" }}</p>
+<p><strong>Check-out Time:</strong> {{ checkout_time|default:"Not checked out" }}</p>
+<p><strong>Duration:</strong> {{ duration }}</p>
+
+<a href="{% url 'home' %}">Back to Home</a>
+{% endblock %}

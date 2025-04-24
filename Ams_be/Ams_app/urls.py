@@ -22,12 +22,12 @@ router.register(r'holidays', HolidayViewSet, basename='holiday')
 urlpatterns = [
     # Template-based views (frontend)
     path('home/', views.home_view, name='home'),
-    
+
     path('user/create/', views.create_user, name='create_user'),
     path('login/', views.login_user, name='login'),
+    path('logout/', views.logout_user, name='logout'),
 
-    path('attendance/check/', views.attendance_check, name='attendance_check'),
-    path('attendance/history/', views.attendance_history, name='attendance_history'),
+    path('attendance/status/', views.attendance_status, name='attendance_status'),
 
 
     path('leave/apply/', views.apply_leave, name='leave_request_form'),
