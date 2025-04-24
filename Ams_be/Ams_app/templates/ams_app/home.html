@@ -1,0 +1,24 @@
+{% extends 'ams_app/base.html' %}
+{% load static %}
+
+{% block content %}
+<h2>Welcome, {{ request.user.name }}!</h2>
+
+<p>You are logged in as: <strong>{{ request.user.role }}</strong></p>
+
+<hr>
+
+<h3>Quick Links</h3>
+<ul>
+    {% if request.user.role == "Admin" or request.user.role == "Manager" %}
+        <li><a href="{% url 'create_user' %}">Create User</a></li>
+        <li><a href="{% url 'shift_allocate' %}">Allocate Shift</a></li>
+        <li><a href="{% url 'holiday_list' %}">View Holidays</a></li>
+        <li><a href="{% url 'leave_list' %}">Manage Leave Requests</a></li>
+    {% endif %}
+    <li><a href="{% url 'attendance_check' %}">Check Attendance</a></li>
+    <li><a href="{% url 'attendance_history' %}">My Attendance History</a></li>
+    <li><a href="{% url 'leave_request_form' %}">Apply for Leave</a></li>
+</ul>
+
+{% endblock %}

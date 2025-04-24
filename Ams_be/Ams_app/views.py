@@ -165,6 +165,8 @@ class HolidayViewSet(viewsets.ModelViewSet):
 
 
 
+
+
 from datetime import date, timedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -176,7 +178,56 @@ from .forms import LeaveRequestForm  # We’ll create this next
 def is_admin_or_hr(user):
     return user.role in ['Admin', 'HR']
 
-# ----- Attendance Views ----- #
+# user views for template
+from django.shortcuts import render, redirect
+from .models import User, Shift
+from django.contrib.auth import login, authenticate
+from django.contrib import messages
+
+def create_user(request):
+    if request.method == 'POST':
+        email = request.POST['email']
+        name = request.POST['name']
+        role = request.POST['role']
+        password = request.POST['password']
+        shift_id = request.POST.get('shift')
+
+        shift = Shift.objects.get(id=shift_id) if shift_id else None
+
+        user = User.objects.create_user(email=email, name=name, role=role, password=password, shift=shift)
+        messages.success(request, f'User {user.name} created successfully!')
+
+        return redirect('login')  # Redirect to login page after successful registration
+    
+    shifts = Shift.objects.all()
+    return render(request, 'ams_app/user/create_user.html', {'shifts': shifts})
+
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+
+def login_user(request):
+    if request.method == 'POST':
+        email = request.POST['email']
+        password = request.POST['password']
+
+        user = authenticate(request, email=email, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect('home')  # Redirect to the home page after successful login
+        else:
+            messages.error(request, 'Invalid login credentials. Please try again.')
+
+    return render(request, 'ams_app/user/login.html')
+
+@login_required
+def home_view(request):
+    return render(request, 'ams_app/home.html')
+
+# ----- Attendance Views for templates ----- #
 
 @login_required
 def attendance_check(request):
@@ -207,21 +258,32 @@ def attendance_history(request):
 
     return render(request, 'ams_app/attendance/history.html', {'attendance_data': attendance_data})
 
-# ----- Leave Request Views ----- #
+# ----- Leave Request Views for templates ----- #
 
-@login_required
-def leave_request_form(request):
-    if request.method == 'POST':
-        form = LeaveRequestForm(request.POST)
-        if form.is_valid():
-            leave = form.save(commit=False)
-            leave.employee = request.user  # Assign the current user as the employee for the leave request
-            leave.save()  # Save the form instance
-            return redirect('leave_list')  # Redirect to the leave list view after success
-    else:
-        form = LeaveRequestForm()  # Instantiate an empty form
+from django.contrib.auth import get_user_model
+from django.shortcuts import render, redirect
+from .models import LeaveRequest
 
-    return render(request, 'ams_app/leave/apply_leave.html', {'form': form})
+User = get_user_model()
+
+def apply_leave(request):
+    if request.method == "POST":
+        user_id = request.POST.get('user_id')
+        user = User.objects.get(id=user_id)
+
+        LeaveRequest.objects.create(
+            user=user,
+            start_date=request.POST.get('start_date'),
+            end_date=request.POST.get('end_date'),
+            leave_type=request.POST.get('leave_type'),
+            reason=request.POST.get('reason')
+        )
+        return redirect('leave_success')  # or wherever you want to redirect
+
+    context = {}
+    if request.user.is_superuser or request.user.role in ["Admin", "HR"]:
+        context['users'] = User.objects.all()
+    return render(request, 'ams_app/leave/apply_leave.html', context)
 
 @login_required
 def leave_list(request):
@@ -233,7 +295,7 @@ def leave_list(request):
 
     return render(request, 'ams_app/leave/leave_list.html', {'leaves': leaves})
 
-# ----- Shift Views ----- #
+# ----- Shift Views for templates ----- #
 
 @login_required
 @user_passes_test(is_admin_or_hr)
@@ -241,43 +303,77 @@ def shift_list(request):
     shifts = Shift.objects.all()  # Display all shifts for Admin/HR
     return render(request, 'ams_app/shift/shift_list.html', {'shifts': shifts})
 
-# ----- Holiday Views ----- #
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from .models import Shift, UserShiftAssignment
+
+User = get_user_model()
+
+from datetime import date
+
+from django.contrib import messages
+
+def allocate_shift(request):
+    if request.method == "POST":
+        user_id = request.POST.get('user_id')
+        shift_id = request.POST.get('shift_id')
+
+        user = User.objects.get(id=user_id)
+        shift = Shift.objects.get(id=shift_id)
+
+        today = date.today()  # Set today's date or any other logic
+
+        # Create or update shift allocation
+        UserShiftAssignment.objects.update_or_create(
+            user=user,
+            date=today,
+            defaults={'shift': shift}
+        )
+
+        messages.success(request, f"Shift '{shift.name}' allocated to {user.name} successfully!")
+
+        return redirect('shift_allocate')  # Use the correct URL name
+
+    context = {
+        'users': User.objects.all(),
+        'shifts': Shift.objects.all(),
+        'assignments': UserShiftAssignment.objects.select_related('user', 'shift'),
+    }
+    return render(request, 'ams_app/shift/allocate_shift.html', context)
+
+
+# ----- Holiday Views for templates ----- #
 
 @login_required
 def holiday_list(request):
     holidays = Holiday.objects.all()  # Show all holidays to the user
     return render(request, 'ams_app/holiday/holiday_list.html', {'holidays': holidays})
 
-# ----- Attendance Report (Admin/HR only) ----- #
+# Add Holiday
+def add_holiday(request):
+    if request.method == "POST":
+        holiday_name = request.POST.get('holiday_name')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        description = request.POST.get('description')
 
-@login_required
-@user_passes_test(is_admin_or_hr)
-def attendance_report(request, user_id=None):
-    if not user_id:
-        return redirect('error_view')  # You can redirect to an error page or show a message
+        if holiday_name and start_date and end_date and description:
+            try:
+                # Create the Holiday object correctly
+                holiday = Holiday.objects.create(
+                    name=holiday_name,
+                    start_date=start_date,
+                    end_date=end_date,
+                    description=description
+                )
+                messages.success(request, "Holiday added successfully!")
+            except Exception as e:
+                messages.error(request, f"Error: {e}")
+                return redirect('add_holiday')
 
-    try:
-        employee = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return redirect('error_view')  # You can show an error page or message here
+            return redirect('holiday_list')  # Redirect to the holiday list page
+        else:
+            messages.error(request, "All fields are required.")
+            return redirect('add_holiday')
 
-    end_date = now().date()
-    start_date = end_date - timedelta(days=30)
-    attendance_data = Attendance.objects.filter(user=employee, date__range=(start_date, end_date))
-
-    return render(request, 'ams_app/attendance/attendance_report.html', {'attendance_data': attendance_data, 'employee': employee})
-
-def all_attendance_today(request):
-    today = now().date()
-    attendance_records = Attendance.objects.filter(date=today).select_related('user')
-    return render(request, 'ams_app/attendance/all_attendance.html', {
-        'attendance_records': attendance_records,
-        'today': today
-    })
-
-def all_attendance_last_30_days(request):
-    from_date = now().date() - timedelta(days=30)
-    attendance_records = Attendance.objects.filter(date__gte=from_date).select_related('user').order_by('-date')
-    return render(request, 'ams_app/attendance/all_attendance.html', {
-        'attendance_records': attendance_records
-    })
+    return render(request, 'ams_app/holiday/add_holiday.html')

@@ -3,8 +3,22 @@
 
 {% block content %}
 <h2>Apply for Leave</h2>
+
 <form method="post" action="">
     {% csrf_token %}
+
+    {% if request.user.is_superuser or request.user.role in "Admin HR" %}
+        <label>Select User:</label>
+        <select name="user_id">
+            {% for user in users %}
+                <option value="{{ user.id }}">{{ user.name }}</option>
+            {% endfor %}
+        </select><br>
+    {% else %}
+        <p><strong>User:</strong> {{ request.user.name }}</p>
+        <input type="hidden" name="user_id" value="{{ request.user.id }}">
+    {% endif %}
+
     <label>Start Date:</label>
     <input type="date" name="start_date" required><br>
 

@@ -21,13 +21,24 @@ router.register(r'holidays', HolidayViewSet, basename='holiday')
 
 urlpatterns = [
     # Template-based views (frontend)
+    path('home/', views.home_view, name='home'),
+    
+    path('user/create/', views.create_user, name='create_user'),
+    path('login/', views.login_user, name='login'),
+
     path('attendance/check/', views.attendance_check, name='attendance_check'),
-    path('attendance/all/', views.all_attendance_last_30_days, name='all_attendance'),
     path('attendance/history/', views.attendance_history, name='attendance_history'),
-    path('leave/apply/', views.leave_request_form, name='leave_request_form'),
+
+
+    path('leave/apply/', views.apply_leave, name='leave_request_form'),
     path('leave/list/', views.leave_list, name='leave_list'),
-    path('shifts/', views.shift_list, name='shift_list'),
-    path('holidays/', views.holiday_list, name='holiday_list'),
+
+
+    path('shift/list/', views.shift_list, name='shift_list'),
+    path('shift/allocate',views.allocate_shift,name='shift_allocate'),
+
+    path('holiday/', views.holiday_list, name='holiday_list'),
+    path('holiday/add/', views.add_holiday, name='add_holiday'),
 
     # API Endpoints (handled by DRF viewsets)
     # These paths are already handled by the router, so no need to redefine them.

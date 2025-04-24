@@ -11,14 +11,17 @@
 </head>
 <body>
     <header>
-        <h1>Attendance Management System</h1>
+        <h1>Attendance Management System - 2025</h1>
         <nav>
             <ul>
+                <li><a href="{% url 'create_user' %}">Create user</a></li>
                 <li><a href="{% url 'attendance_check' %}">Check Attendance</a></li>
                 <li><a href="{% url 'attendance_history' %}">Attendance History</a></li>
                 <li><a href="{% url 'leave_list' %}">Leave Requests</a></li>
-                <li><a href="{% url 'shift_list' %}">Shift Assignments</a></li>
-                <li><a href="{% url 'holiday_list' %}">Holidays</a></li>
+                <li><a href="{% url 'shift_list' %}">Shifts List</a></li>
+                <li><a href="{% url 'shift_allocate' %}">Shift Allocations</a></li>
+                <li><a href="{% url 'holiday_list' %}">Holiday List</a></li>
+                <li><a href="{% url 'add_holiday' %}">Add Holiday</a></li>
             </ul>
         </nav>
     </header>
@@ -27,10 +30,6 @@
         {% block content %}
         {% endblock %}
     </div>
-
-    <footer>
-        <p>&copy; 2025 Attendance Management System</p>
-    </footer>
 
     <!-- Include JS -->
     <script src="{% static 'ams_app/scripts.js' %}"></script>

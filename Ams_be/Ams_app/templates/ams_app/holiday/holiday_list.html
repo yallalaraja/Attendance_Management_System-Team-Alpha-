@@ -3,18 +3,27 @@
 
 {% block content %}
 <h2>Holiday List</h2>
+
+
 <table>
     <tr>
-        <th>Date</th>
+        <th>Start Date</th>
+        <th>End Date</th>
         <th>Holiday Name</th>
         <th>Description</th>
     </tr>
     {% for holiday in holidays %}
     <tr>
-        <td>{{ holiday.date }}</td>
+        <td>{{ holiday.start_date }}</td>
+        <td>{{ holiday.end_date }}</td>
         <td>{{ holiday.name }}</td>
         <td>{{ holiday.description }}</td>
     </tr>
     {% endfor %}
 </table>
+
+<!-- Button to navigate to Add Holiday page -->
+<a href="{% url 'add_holiday' %}">
+    <button>Add New Holiday</button>
+</a>
 {% endblock %}

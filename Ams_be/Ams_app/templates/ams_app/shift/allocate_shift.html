@@ -1,0 +1,54 @@
+{% extends 'ams_app/base.html' %}
+{% load static %}
+
+{% block content %}
+<h2>Allocate Shift to User</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <label>Select User:</label>
+    <select name="user_id" required>
+        {% for user in users %}
+        <option value="{{ user.id }}">{{ user.name }}</option>
+        {% endfor %}
+    </select><br><br>
+
+    <label>Select Shift:</label>
+    <select name="shift_id" required>
+        {% for shift in shifts %}
+        <option value="{{ shift.id }}">{{ shift.name }} ({{ shift.start_time }} - {{ shift.end_time }})</option>
+        {% endfor %}
+    </select><br><br>
+
+    <button type="submit">Allocate Shift</button>
+</form>
+
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<hr>
+
+<h3>Current Shift Allocations</h3>
+<table>
+    <tr>
+        <th>User</th>
+        <th>Shift</th>
+        <th>Start Time</th>
+        <th>End Time</th>
+    </tr>
+    {% for assignment in assignments %}
+    <tr>
+        <td>{{ assignment.user.name }}</td>
+        <td>{{ assignment.shift.name }}</td>
+        <td>{{ assignment.shift.start_time }}</td>
+        <td>{{ assignment.shift.end_time }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
