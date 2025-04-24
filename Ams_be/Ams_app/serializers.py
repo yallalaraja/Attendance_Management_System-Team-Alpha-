@@ -24,8 +24,12 @@ class AttendanceReportSerializer(serializers.ModelSerializer):
 class LeaveRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = LeaveRequest
-        fields = '__all__'
-        read_only_fields = ['employee', 'status', 'applied_at', 'approved_by']
+        fields = [
+            'id', 'leave_type', 'start_date', 'end_date',
+            'reason', 'status', 'applied_at', 'employee', 'approved_by'
+        ]
+        read_only_fields = ['id', 'applied_at', 'status', 'employee', 'approved_by']
+
 
 class LeaveRequestApproveSerializer(serializers.ModelSerializer):
     class Meta:

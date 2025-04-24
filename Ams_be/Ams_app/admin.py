@@ -4,7 +4,7 @@ from .models import User, Attendance, Holiday, Shift, LeaveRequest, UserShiftAss
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'name', 'role', 'is_active')  # Removed 'is_staff' from list_display
+    list_display = ('email', 'name', 'role', 'is_active','is_staff')  # Removed 'is_staff' from list_display
     list_filter = ('role', 'is_active')  # Removed 'is_staff' from list_filter
     search_fields = ('email', 'name')
     ordering = ('email',)

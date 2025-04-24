@@ -9,7 +9,7 @@ from Ams_app.views import (
     HolidayViewSet,
 )
 
-app_name = 'api'  # Namespace for this app
+# app_name = 'api'  # Namespace for this app
 
 # Set up router for viewsets
 router = DefaultRouter()
@@ -22,11 +22,11 @@ router.register(r'holidays', HolidayViewSet, basename='holiday')
 
 urlpatterns = [
     # Attendance Management Paths
-    path('check-in/', AttendanceViewSet.as_view({'post': 'mark_check_in'}), name='check_in'),
-    path('check-out/', AttendanceViewSet.as_view({'post': 'mark_check_out'}), name='check_out'),
+    # This can handle both check-in and check-out in the same endpoint
+    path('attendance/', AttendanceViewSet.as_view({'post': 'create'}), name='attendance_create'),
 
     # Attendance Report
-    path('report/<int:user_id>/', AttendanceReportViewSet.as_view({'get': 'get_report'}), name='attendance_report'),
+    path('attendance-report/<int:user_id>/', AttendanceReportViewSet.as_view({'get': 'list'}), name='attendance_report'),
 
     # Leave Request Paths
     path('leave-request/', LeaveRequestViewSet.as_view({'post': 'create'}), name='create_leave_request'),

@@ -67,8 +67,11 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.date} - {self.status}"
-
-
+        
+        
+    def save(self, *args, **kwargs):
+        self.clean()  # Ensure validation is called before saving
+        super().save(*args, **kwargs)
 
     def get_total_hours(self):
         if self.check_in and self.check_out:
@@ -120,13 +123,14 @@ class LeaveRequest(models.Model):
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_leaves')
 
     def clean(self):
-        # Ensure that the employee cannot approve their own leave request
-        if self.approved_by == self.employee:
-            raise ValidationError("An employee cannot approve their own leave request.")
+        if self.status == 'Approved' and self.approved_by:
+            if self.approved_by.role not in ['Admin', 'HR']:
+                raise ValidationError("Only Admin or HR can approve leave requests.")
 
     def save(self, *args, **kwargs):
-        # Call clean method to validate the condition before saving
-        self.clean()
+        if self.status == 'Approved' and self.approved_by:
+            if self.approved_by.role not in ['Admin', 'HR']:
+                raise PermissionError("Only Admin or HR can approve leave requests.")
         super().save(*args, **kwargs)
 
 
