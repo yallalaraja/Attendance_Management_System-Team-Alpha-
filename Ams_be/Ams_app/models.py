@@ -123,9 +123,22 @@ class LeaveRequest(models.Model):
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_leaves')
 
     def clean(self):
+        if self.end_date < self.start_date:
+            raise ValidationError("End date cannot be before start date.")
+
         if self.status == 'Approved' and self.approved_by:
             if self.approved_by.role not in ['Admin', 'HR']:
                 raise ValidationError("Only Admin or HR can approve leave requests.")
+
+        overlapping_leaves = LeaveRequest.objects.filter(
+            employee=self.employee,
+            status='Approved',
+            start_date__lte=self.end_date,
+            end_date__gte=self.start_date
+        ).exclude(id=self.id)
+        if overlapping_leaves.exists():
+            raise ValidationError("Overlapping approved leave already exists.")
+
 
     def save(self, *args, **kwargs):
         if self.status == 'Approved' and self.approved_by:
