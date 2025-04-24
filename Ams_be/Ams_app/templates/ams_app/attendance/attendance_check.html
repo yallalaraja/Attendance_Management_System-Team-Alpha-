@@ -1,0 +1,41 @@
+<!-- ams_app/templates/ams_app/attendance_check.html -->
+ {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Check</title>
+
+    <!-- Link to the CSS file -->
+    <link rel="stylesheet" href="{% static 'ams_app/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Attendance Check</h1>
+        {% if attendance %}
+            <p>Attendance for today:</p>
+            <p>Status: {{ attendance.status }}</p>
+            <p>Check-in time: {{ attendance.check_in }}</p>
+            {% if attendance.check_out %}
+                <p>Check-out time: {{ attendance.check_out }}</p>
+            {% else %}
+                <p>Not checked out yet.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="check-out-btn">Check Out</button>
+                </form>
+            {% endif %}
+        {% else %}
+            <p>No attendance recorded for today.</p>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="check-in-btn">Check In</button>
+            </form>
+        {% endif %}
+    </div>
+
+    <!-- Link to the JS file -->
+    <script src="{% static 'ams_app/scripts.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{% extends 'ams_app/base.html' %}
+{% load static %}
+
+{% block content %}
+<h2>Holiday List</h2>
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Holiday Name</th>
+        <th>Description</th>
+    </tr>
+    {% for holiday in holidays %}
+    <tr>
+        <td>{{ holiday.date }}</td>
+        <td>{{ holiday.name }}</td>
+        <td>{{ holiday.description }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

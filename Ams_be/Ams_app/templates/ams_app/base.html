@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Attendance Management System{% endblock %}</title>
+
+    <!-- Link to CSS -->
+    <link rel="stylesheet" href="{% static 'ams_app/styles.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Attendance Management System</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'attendance_check' %}">Check Attendance</a></li>
+                <li><a href="{% url 'attendance_history' %}">Attendance History</a></li>
+                <li><a href="{% url 'leave_list' %}">Leave Requests</a></li>
+                <li><a href="{% url 'shift_list' %}">Shift Assignments</a></li>
+                <li><a href="{% url 'holiday_list' %}">Holidays</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Attendance Management System</p>
+    </footer>
+
+    <!-- Include JS -->
+    <script src="{% static 'ams_app/scripts.js' %}"></script>
+</body>
+</html>

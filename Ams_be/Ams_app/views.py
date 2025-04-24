@@ -152,3 +152,132 @@ class HolidayViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Holiday.objects.all()
+
+
+
+
+
+
+
+
+
+
+
+
+
+from datetime import date, timedelta
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils.timezone import now
+from .models import Attendance, LeaveRequest, Shift, UserShiftAssignment, Holiday
+from .forms import LeaveRequestForm  # We’ll create this next
+
+# Utility role checks
+def is_admin_or_hr(user):
+    return user.role in ['Admin', 'HR']
+
+# ----- Attendance Views ----- #
+
+@login_required
+def attendance_check(request):
+    today = date.today()
+    employee = request.user
+    current_time = now().time()
+    attendance = Attendance.objects.filter(user=employee, date=today).first()
+
+    if request.method == 'POST':
+        if attendance:
+            if not attendance.check_out:
+                attendance.check_out = current_time
+                attendance.status = 'Checked-Out'
+                attendance.save()
+        else:
+            # Create a new attendance record
+            attendance = Attendance(user=employee, date=today, check_in=current_time, status='Checked-In')
+            attendance.save()
+
+    return render(request, 'ams_app/attendance/attendance_check.html', {'attendance': attendance})
+
+@login_required
+def attendance_history(request):
+    employee = request.user
+    end_date = now().date()
+    start_date = end_date - timedelta(days=30)  # Get attendance data for the last 30 days
+    attendance_data = Attendance.objects.filter(user=employee, date__range=(start_date, end_date))
+
+    return render(request, 'ams_app/attendance/history.html', {'attendance_data': attendance_data})
+
+# ----- Leave Request Views ----- #
+
+@login_required
+def leave_request_form(request):
+    if request.method == 'POST':
+        form = LeaveRequestForm(request.POST)
+        if form.is_valid():
+            leave = form.save(commit=False)
+            leave.employee = request.user  # Assign the current user as the employee for the leave request
+            leave.save()  # Save the form instance
+            return redirect('leave_list')  # Redirect to the leave list view after success
+    else:
+        form = LeaveRequestForm()  # Instantiate an empty form
+
+    return render(request, 'ams_app/leave/apply_leave.html', {'form': form})
+
+@login_required
+def leave_list(request):
+    user = request.user
+    if user.role in ['Admin', 'HR']:
+        leaves = LeaveRequest.objects.all()  # Admin/HR sees all leave requests
+    else:
+        leaves = LeaveRequest.objects.filter(employee=user)  # Employees only see their own leave requests
+
+    return render(request, 'ams_app/leave/leave_list.html', {'leaves': leaves})
+
+# ----- Shift Views ----- #
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def shift_list(request):
+    shifts = Shift.objects.all()  # Display all shifts for Admin/HR
+    return render(request, 'ams_app/shift/shift_list.html', {'shifts': shifts})
+
+# ----- Holiday Views ----- #
+
+@login_required
+def holiday_list(request):
+    holidays = Holiday.objects.all()  # Show all holidays to the user
+    return render(request, 'ams_app/holiday/holiday_list.html', {'holidays': holidays})
+
+# ----- Attendance Report (Admin/HR only) ----- #
+
+@login_required
+@user_passes_test(is_admin_or_hr)
+def attendance_report(request, user_id=None):
+    if not user_id:
+        return redirect('error_view')  # You can redirect to an error page or show a message
+
+    try:
+        employee = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return redirect('error_view')  # You can show an error page or message here
+
+    end_date = now().date()
+    start_date = end_date - timedelta(days=30)
+    attendance_data = Attendance.objects.filter(user=employee, date__range=(start_date, end_date))
+
+    return render(request, 'ams_app/attendance/attendance_report.html', {'attendance_data': attendance_data, 'employee': employee})
+
+def all_attendance_today(request):
+    today = now().date()
+    attendance_records = Attendance.objects.filter(date=today).select_related('user')
+    return render(request, 'ams_app/attendance/all_attendance.html', {
+        'attendance_records': attendance_records,
+        'today': today
+    })
+
+def all_attendance_last_30_days(request):
+    from_date = now().date() - timedelta(days=30)
+    attendance_records = Attendance.objects.filter(date__gte=from_date).select_related('user').order_by('-date')
+    return render(request, 'ams_app/attendance/all_attendance.html', {
+        'attendance_records': attendance_records
+    })
