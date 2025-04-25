@@ -341,30 +341,91 @@ def attendance_status(request):
 
 # ----- Leave Request Views for templates ----- #
 
-from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect
-from .models import LeaveRequest
-
-User = get_user_model()
+from django.contrib import messages
+from .models import LeaveRequest, User
+from datetime import datetime
 
 def apply_leave(request):
     if request.method == "POST":
+        # Get the user ID and fetch the user object
         user_id = request.POST.get('user_id')
         user = User.objects.get(id=user_id)
+        
+        # Get the start and end date from the form data
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        
+        # Convert the date strings to datetime objects
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except ValueError:
+            messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+            return redirect('apply_leave')  # or the relevant URL
+        
+        # Validate that the end date is not before the start date
+        if end_date < start_date:
+            messages.error(request, "End date cannot be before the start date.")
+            return redirect('apply_leave')
 
+        # Create the leave request if validation passes
         LeaveRequest.objects.create(
             employee=user,
-            start_date=request.POST.get('start_date'),
-            end_date=request.POST.get('end_date'),
+            start_date=start_date,
+            end_date=end_date,
             leave_type=request.POST.get('leave_type'),
             reason=request.POST.get('reason')
         )
-        return redirect('leave_list')  # or wherever you want to redirect
+        messages.success(request, "Leave request has been submitted successfully.")
+        return redirect('leave_list')  # Redirect to the leave list or wherever you want
 
     context = {}
     if request.user.is_superuser or request.user.role in ["Admin", "HR"]:
         context['users'] = User.objects.all()
+    
     return render(request, 'ams_app/leave/apply_leave.html', context)
+
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import LeaveRequest
+
+def approve_leave(request, leave_id):
+    leave_request = LeaveRequest.objects.get(id=leave_id)
+    
+    # Check if the current user is an Admin or HR, and not the employee
+    if request.user == leave_request.employee:
+        messages.error(request, "You cannot approve your own leave request.")
+        return redirect('leave_list')  # or wherever you want to redirect
+    
+    if request.user.role in ["Admin", "HR"] or request.user.is_superuser:
+        leave_request.status = 'Approved'
+        leave_request.save()
+        messages.success(request, "Leave request approved successfully.")
+    else:
+        messages.error(request, "You are not authorized to approve this leave request.")
+    
+    return redirect('leave_list')  # Redirect back to the leave list
+
+def reject_leave(request, leave_id):
+    leave_request = LeaveRequest.objects.get(id=leave_id)
+    
+    # Check if the current user is an Admin or HR, and not the employee
+    if request.user == leave_request.employee:
+        messages.error(request, "You cannot reject your own leave request.")
+        return redirect('leave_list')  # or wherever you want to redirect
+    
+    if request.user.role in ["Admin", "HR"] or request.user.is_superuser:
+        leave_request.status = 'Rejected'
+        leave_request.save()
+        messages.success(request, "Leave request rejected successfully.")
+    else:
+        messages.error(request, "You are not authorized to reject this leave request.")
+    
+    return redirect('leave_list')  # Redirect back to the leave list
+
+
 
 
 @login_required
@@ -378,25 +439,37 @@ def leave_list(request):
     return render(request, 'ams_app/leave/leave_list.html', {'leave_requests': leaves})  # Context updated to match template variable name
 
 
-from django.shortcuts import get_object_or_404, redirect
-from .models import LeaveRequest
-
-# Approve leave request
-def approve_leave(request, leave_id):
-    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
-    leave_request.status = 'Approved'
-    leave_request.save()
-    return redirect('leave_list')  # Redirect back to the leave list
-
-# Reject leave request
-def reject_leave(request, leave_id):
-    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
-    leave_request.status = 'Rejected'
-    leave_request.save()
-    return redirect('leave_list')  # Redirect back to the leave list
-
-
 # ----- Shift Views for templates ----- #
+
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from .models import Shift
+# If you're using Django forms for validation (optional)
+
+# View to render the add shift form and process the data
+def add_shift(request):
+    if request.method == 'POST':
+        # Get form data
+        shift_name = request.POST['shift_name']
+        start_time = request.POST['start_time']
+        end_time = request.POST['end_time']
+        
+        # Check if end time is before start time
+        if start_time >= end_time:
+            return HttpResponse("End time must be after start time.", status=400)
+
+        # Create new shift record
+        new_shift = Shift.objects.create(
+            name=shift_name,
+            start_time=start_time,
+            end_time=end_time
+        )
+        new_shift.save()
+
+        # Redirect to the shift list view after successful creation
+        return redirect('shift_list')  # Adjust 'shift_list' to the appropriate URL name
+    
+    return render(request, 'ams_app/shift/add_shift.html')
 
 @login_required
 @user_passes_test(is_admin_or_hr)

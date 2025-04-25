@@ -32,10 +32,10 @@ urlpatterns = [
 
     path('leave/approve/<int:leave_id>/', views.approve_leave, name='approve_leave'),  # Approve leave
     path('leave/reject/<int:leave_id>/', views.reject_leave, name='reject_leave'),
-    path('leave/apply/', views.apply_leave, name='leave_request_form'),
+    path('leave/apply/', views.apply_leave, name='apply_leave'),
     path('leave/list/', views.leave_list, name='leave_list'),
 
-
+    path('shift/add/',views.add_shift,name='add_shift'),
     path('shift/list/', views.shift_list, name='shift_list'),
     path('shift/allocate',views.allocate_shift,name='shift_allocate'),
 

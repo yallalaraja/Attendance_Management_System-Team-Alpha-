@@ -1,0 +1,36 @@
+{% extends 'ams_app/base.html' %}
+{% load static %}
+
+{% block title %}Add Shift{% endblock %}
+
+{% block content %}
+    <h2>Add New Shift</h2>
+
+    <form method="POST" action="{% url 'add_shift' %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="shift_name">Shift Name</label>
+            <input type="text" id="shift_name" name="shift_name" required placeholder="Enter shift name" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="start_time">Start Time</label>
+            <input type="time" id="start_time" name="start_time" required class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="end_time">End Time</label>
+            <input type="time" id="end_time" name="end_time" required class="form-control">
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Add Shift</button>
+        </div>
+    </form>
+
+    <div>
+        <a href="{% url 'shift_list' %}">Back to Shift List</a>
+    </div>
+
+{% endblock %}
