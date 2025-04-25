@@ -454,10 +454,6 @@ def add_shift(request):
         start_time = request.POST['start_time']
         end_time = request.POST['end_time']
         
-        # Check if end time is before start time
-        if start_time >= end_time:
-            return HttpResponse("End time must be after start time.", status=400)
-
         # Create new shift record
         new_shift = Shift.objects.create(
             name=shift_name,
