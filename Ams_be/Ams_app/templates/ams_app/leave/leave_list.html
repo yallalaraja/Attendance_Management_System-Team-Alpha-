@@ -1,12 +1,18 @@
-<!-- ams_app/templates/ams_app/leave_list.html -->
 {% extends 'ams_app/base.html' %}
+{% load static %}
 
 {% block title %}Leave Requests{% endblock %}
 
 {% block content %}
     <h2>Leave Requests</h2>
 
-    <table>
+    <!-- Include stylesheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'ams_app/styles.css' %}">  <!-- Adjust path to your CSS file -->
+    
+    <!-- Include JavaScript -->
+    <script type="text/javascript" src="{% static 'ams_app/scripts.js' %}"></script>  <!-- Adjust path to your JS file -->
+
+    <table class="leave-table">
         <thead>
             <tr>
                 <th>Employee Name</th>
@@ -29,14 +35,14 @@
                         {% if leave.status == 'Pending' %}
                             <form method="POST" action="{% url 'approve_leave' leave.id %}">
                                 {% csrf_token %}
-                                <button type="submit">Approve</button>
+                                <button type="submit" class="approve-btn">Approve</button>
                             </form>
                             <form method="POST" action="{% url 'reject_leave' leave.id %}">
                                 {% csrf_token %}
-                                <button type="submit">Reject</button>
+                                <button type="submit" class="reject-btn">Reject</button>
                             </form>
                         {% else %}
-                            <span>Processed</span>
+                            <span class="processed">Processed</span>
                         {% endif %}
                     </td>
                 </tr>

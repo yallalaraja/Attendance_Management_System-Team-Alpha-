@@ -13,8 +13,8 @@ from Ams_app.views import (
 # Set up router for viewsets
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
-router.register(r'attendance', AttendanceViewSet, basename='attendance')
-router.register(r'attendance-report', AttendanceReportViewSet, basename='attendance-report')
+router.register(r'attendances', AttendanceViewSet, basename='attendance')
+router.register(r'attendances-report', AttendanceReportViewSet, basename='attendance-report')
 router.register(r'leave-requests', LeaveRequestViewSet, basename='leave-request')
 router.register(r'shifts', ShiftViewSet, basename='shift')
 router.register(r'holidays', HolidayViewSet, basename='holiday')
@@ -27,9 +27,11 @@ urlpatterns = [
     path('login/', views.login_user, name='login'),
     path('logout/', views.logout_user, name='logout'),
 
+    path('attendance/check/', views.attendance_check, name='attendance_check'),
     path('attendance/status/', views.attendance_status, name='attendance_status'),
 
-
+    path('leave/approve/<int:leave_id>/', views.approve_leave, name='approve_leave'),  # Approve leave
+    path('leave/reject/<int:leave_id>/', views.reject_leave, name='reject_leave'),
     path('leave/apply/', views.apply_leave, name='leave_request_form'),
     path('leave/list/', views.leave_list, name='leave_list'),
 

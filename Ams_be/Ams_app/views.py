@@ -250,6 +250,58 @@ from datetime import datetime, date
 from .models import Attendance
 
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from datetime import datetime, timedelta
+from .models import Attendance
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from datetime import datetime, date
+from .models import Attendance
+
+@login_required
+def attendance_check(request):
+    user = request.user
+    today = date.today()
+
+    # Try to get today’s attendance record
+    attendance, created = Attendance.objects.get_or_create(user=user, date=today)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'checkin' and not attendance.check_in:
+            attendance.check_in = datetime.now().time()
+            attendance.status = 'Present'
+            attendance.save()
+        elif action == 'checkout' and not attendance.check_out:
+            attendance.check_out = datetime.now().time()
+            attendance.save()
+
+    checkin_time = attendance.check_in
+    checkout_time = attendance.check_out
+
+    # Calculate duration only if both checkin and checkout are available
+    if checkin_time and checkout_time:
+        checkin_datetime = datetime.combine(today, checkin_time)
+        checkout_datetime = datetime.combine(today, checkout_time)
+        duration = checkout_datetime - checkin_datetime
+    else:
+        duration = None
+
+    context = {
+        'user': user,
+        'checkin_time': checkin_time,
+        'checkout_time': checkout_time,
+        'duration': duration,
+        'status': attendance.status,
+    }
+
+    return render(request, 'ams_app/attendance/attendance_check.html', context)
+
+
 @login_required
 def attendance_status(request):
     user = request.user
@@ -257,8 +309,8 @@ def attendance_status(request):
 
     try:
         attendance_record = Attendance.objects.get(user=user, date=today)
-        checkin_time = attendance_record.checkin_time
-        checkout_time = attendance_record.checkout_time
+        checkin_time = attendance_record.check_in
+        checkout_time = attendance_record.check_out
 
         if checkin_time and checkout_time:
             checkin_datetime = datetime.combine(today, checkin_time)
@@ -301,18 +353,19 @@ def apply_leave(request):
         user = User.objects.get(id=user_id)
 
         LeaveRequest.objects.create(
-            user=user,
+            employee=user,
             start_date=request.POST.get('start_date'),
             end_date=request.POST.get('end_date'),
             leave_type=request.POST.get('leave_type'),
             reason=request.POST.get('reason')
         )
-        return redirect('leave_success')  # or wherever you want to redirect
+        return redirect('leave_list')  # or wherever you want to redirect
 
     context = {}
     if request.user.is_superuser or request.user.role in ["Admin", "HR"]:
         context['users'] = User.objects.all()
     return render(request, 'ams_app/leave/apply_leave.html', context)
+
 
 @login_required
 def leave_list(request):
@@ -322,7 +375,26 @@ def leave_list(request):
     else:
         leaves = LeaveRequest.objects.filter(employee=user)  # Employees only see their own leave requests
 
-    return render(request, 'ams_app/leave/leave_list.html', {'leaves': leaves})
+    return render(request, 'ams_app/leave/leave_list.html', {'leave_requests': leaves})  # Context updated to match template variable name
+
+
+from django.shortcuts import get_object_or_404, redirect
+from .models import LeaveRequest
+
+# Approve leave request
+def approve_leave(request, leave_id):
+    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
+    leave_request.status = 'Approved'
+    leave_request.save()
+    return redirect('leave_list')  # Redirect back to the leave list
+
+# Reject leave request
+def reject_leave(request, leave_id):
+    leave_request = get_object_or_404(LeaveRequest, id=leave_id)
+    leave_request.status = 'Rejected'
+    leave_request.save()
+    return redirect('leave_list')  # Redirect back to the leave list
+
 
 # ----- Shift Views for templates ----- #
 

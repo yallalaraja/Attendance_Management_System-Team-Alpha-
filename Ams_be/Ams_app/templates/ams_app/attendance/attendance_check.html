@@ -1,0 +1,18 @@
+{% extends 'ams_app/base.html' %}
+{% load static %}
+
+{% block content %}
+<h2>Attendance Check</h2>
+
+<p><strong>User:</strong> {{ user.name }}</p>
+<p><strong>Status:</strong> {{ status|default:"Not Available" }}</p>
+<p><strong>Check-In Time:</strong> {{ checkin_time|default:"-" }}</p>
+<p><strong>Check-Out Time:</strong> {{ checkout_time|default:"-" }}</p>
+<p><strong>Duration:</strong> {{ duration|default:"-" }}</p>
+
+<form method="post" action="{% url 'attendance_check' %}">
+    {% csrf_token %}
+    <button type="submit" name="action" value="checkin" {% if status == 'Present' %}disabled{% endif %}>Check-In</button>
+    <button type="submit" name="action" value="checkout" {% if not checkin_time or status == 'Completed' %}disabled{% endif %}>Check-Out</button>
+</form>
+{% endblock %}
