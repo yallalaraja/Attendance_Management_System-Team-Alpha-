@@ -1,4 +1,4 @@
-# views created for the backend DRF part
+#  ----------------- views created for the backend DRF part ---------------------
 from datetime import date, timedelta
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -159,37 +159,21 @@ class HolidayViewSet(viewsets.ModelViewSet):
 
 
 
+#  ----------------- views that we use for the frontend templates --------------
 
-
-
-
-
-# views that we use for the frontend templates
-
-
-from datetime import date, timedelta
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.utils.timezone import now
-from .models import Attendance, LeaveRequest, Shift, UserShiftAssignment, Holiday
-from django.shortcuts import render, redirect
-from .models import User, Shift
-from django.contrib.auth import login, authenticate
-from django.contrib import messages
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
-from django.contrib import messages
-from django.contrib.auth import logout
-from django.shortcuts import redirect
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from datetime import timedelta
-from Ams_app.models import Attendance
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import LeaveRequest, User
 from datetime import datetime
+from datetime import date, timedelta
+from django.contrib.auth import login,authenticate,logout,get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.http import HttpResponseForbidden
+from django.views.decorators.http import require_POST
+from django.utils.timezone import now
+from .models import Attendance, LeaveRequest, Shift, UserShiftAssignment, Holiday,User, Shift
+from django.shortcuts import render, redirect
+
+
 # Utility role checks
 def is_admin_or_hr(user):
     return user.role in ['Admin', 'HR']
@@ -212,9 +196,6 @@ def create_user(request):
     
     shifts = Shift.objects.all()
     return render(request, 'ams_app/user/create_user.html', {'shifts': shifts})
-
-
-
 
 
 def login_user(request):
@@ -240,7 +221,7 @@ def home_view(request):
 @require_POST
 def logout_user(request):
     logout(request)
-    return redirect('login')  # Replace 'login' with your actual login view name
+    return redirect('login') 
 
 # ----- Attendance Views for templates ----- #
 @login_required
@@ -320,12 +301,6 @@ def attendance_status(request):
 
     return render(request, 'ams_app/attendance/status.html', context)
 
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from .models import Attendance
-
-from datetime import datetime
-
 @login_required
 def attendance_list(request):
     if request.user.role not in ['Admin', 'HR']:
@@ -393,10 +368,6 @@ def apply_leave(request):
     return render(request, 'ams_app/leave/apply_leave.html', context)
 
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import LeaveRequest
-
 def approve_leave(request, leave_id):
     leave_request = LeaveRequest.objects.get(id=leave_id)
     
@@ -432,8 +403,6 @@ def reject_leave(request, leave_id):
     return redirect('leave_list')  # Redirect back to the leave list
 
 
-
-
 @login_required
 def leave_list(request):
     user = request.user
@@ -446,11 +415,6 @@ def leave_list(request):
 
 
 # ----- Shift Views for templates ----- #
-
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from .models import Shift
-# If you're using Django forms for validation (optional)
 
 # View to render the add shift form and process the data
 def add_shift(request):
@@ -479,15 +443,7 @@ def shift_list(request):
     shifts = Shift.objects.all()  # Display all shifts for Admin/HR
     return render(request, 'ams_app/shift/shift_list.html', {'shifts': shifts})
 
-from django.shortcuts import render, redirect
-from django.contrib.auth import get_user_model
-from .models import Shift, UserShiftAssignment
-
 User = get_user_model()
-
-from datetime import date
-
-from django.contrib import messages
 
 def allocate_shift(request):
     if request.method == "POST":
