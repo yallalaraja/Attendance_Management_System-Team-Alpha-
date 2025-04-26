@@ -1,3 +1,4 @@
+# views created for the backend DRF part
 from datetime import date, timedelta
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -163,8 +164,7 @@ class HolidayViewSet(viewsets.ModelViewSet):
 
 
 
-
-
+# views that we use for the frontend templates
 
 
 from datetime import date, timedelta
@@ -172,18 +172,29 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.timezone import now
 from .models import Attendance, LeaveRequest, Shift, UserShiftAssignment, Holiday
-from .forms import LeaveRequestForm  # We’ll create this next
-
+from django.shortcuts import render, redirect
+from .models import User, Shift
+from django.contrib.auth import login, authenticate
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from datetime import timedelta
+from Ams_app.models import Attendance
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import LeaveRequest, User
+from datetime import datetime
 # Utility role checks
 def is_admin_or_hr(user):
     return user.role in ['Admin', 'HR']
 
 # user views for template
-from django.shortcuts import render, redirect
-from .models import User, Shift
-from django.contrib.auth import login, authenticate
-from django.contrib import messages
-
 def create_user(request):
     if request.method == 'POST':
         email = request.POST['email']
@@ -204,9 +215,7 @@ def create_user(request):
 
 
 
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
-from django.contrib import messages
+
 
 def login_user(request):
     if request.method == 'POST':
@@ -228,39 +237,12 @@ def home_view(request):
     return render(request, 'ams_app/home.html')
 
 # logout functionality
-from django.contrib.auth import logout
-from django.shortcuts import redirect
-from django.views.decorators.http import require_POST
-
 @require_POST
 def logout_user(request):
     logout(request)
     return redirect('login')  # Replace 'login' with your actual login view name
 
 # ----- Attendance Views for templates ----- #
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from datetime import timedelta
-from Ams_app.models import Attendance
-
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from datetime import datetime, date
-from .models import Attendance
-
-
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from datetime import datetime, timedelta
-from .models import Attendance
-
-
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from datetime import datetime, date
-from .models import Attendance
-
 @login_required
 def attendance_check(request):
     user = request.user
@@ -338,14 +320,38 @@ def attendance_status(request):
 
     return render(request, 'ams_app/attendance/status.html', context)
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import Attendance
 
-# ----- Leave Request Views for templates ----- #
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import LeaveRequest, User
 from datetime import datetime
 
+@login_required
+def attendance_list(request):
+    if request.user.role not in ['Admin', 'HR']:
+        return HttpResponseForbidden()
+
+    attendance_records = Attendance.objects.select_related('user').order_by('-date')
+
+    # Add duration manually to each record
+    records_with_duration = []
+    for record in attendance_records:
+        duration = None
+        if record.check_in and record.check_out:
+            checkin_dt = datetime.combine(record.date, record.check_in)
+            checkout_dt = datetime.combine(record.date, record.check_out)
+            duration = checkout_dt - checkin_dt
+        records_with_duration.append({
+            'record': record,
+            'duration': duration,
+        })
+
+    context = {
+        'attendance_records': records_with_duration
+    }
+    return render(request, 'ams_app/attendance/attendance_list.html', context)
+
+# ----- Leave Request Views for templates ----- #
 def apply_leave(request):
     if request.method == "POST":
         # Get the user ID and fetch the user object

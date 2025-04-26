@@ -52,14 +52,6 @@ class ShiftSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# ---------- Holiday Serializer ----------
-
-class HolidaySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Holiday
-        fields = '__all__'
-
-
 # ---------- User Serializer ----------
 
 class UserSerializer(serializers.ModelSerializer):
@@ -86,3 +78,10 @@ class UserShiftAssignmentSerializer(serializers.ModelSerializer):
         model = UserShiftAssignment
         fields = ['id', 'user', 'date', 'shift', 'shift_id']
         read_only_fields = ['user']
+
+# ---------- Holiday Serializer ----------
+
+class HolidaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Holiday
+        fields = '__all__'

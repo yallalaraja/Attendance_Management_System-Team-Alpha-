@@ -29,6 +29,7 @@ urlpatterns = [
 
     path('attendance/check/', views.attendance_check, name='attendance_check'),
     path('attendance/status/', views.attendance_status, name='attendance_status'),
+    path('attendance/list',views.attendance_list,name='attendance_list'),
 
     path('leave/approve/<int:leave_id>/', views.approve_leave, name='approve_leave'),  # Approve leave
     path('leave/reject/<int:leave_id>/', views.reject_leave, name='reject_leave'),
@@ -42,9 +43,5 @@ urlpatterns = [
     path('holiday/', views.holiday_list, name='holiday_list'),
     path('holiday/add/', views.add_holiday, name='add_holiday'),
 
-    # API Endpoints (handled by DRF viewsets)
-    # These paths are already handled by the router, so no need to redefine them.
-    # The following paths are redundant with the DefaultRouter URLs:
-    # 'attendance/', 'attendance-report/<int:user_id>/', etc.
 
 ] + router.urls
