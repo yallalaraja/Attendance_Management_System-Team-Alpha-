@@ -1,4 +1,5 @@
 /* General Styles */
+
 body {
     font-family: 'Arial', sans-serif;
     background-color: #f4f7fc;
@@ -19,6 +20,7 @@ p {
 }
 
 /* Containers */
+
 .container {
     width: 80%;
     margin: 0 auto;
@@ -49,6 +51,7 @@ th {
 }
 
 /* Buttons */
+
 button {
     background-color: #4CAF50;
     color: white;
@@ -69,6 +72,7 @@ button:disabled {
 }
 
 /* Form Elements */
+
 input[type="text"],
 input[type="email"],
 input[type="date"],
@@ -86,6 +90,7 @@ textarea {
 }
 
 /* Links */
+
 a {
     color: #4CAF50;
     text-decoration: none;
@@ -96,11 +101,14 @@ a:hover {
 }
 
 /* Add margin to separate the buttons */
+
 .approve-btn, .reject-btn {
     margin-right: 10px;  /* Adjust this value as needed */
+
 }
 
 /* You can also add styling for the buttons if needed */
+
 .approve-btn {
     background-color: green;
     color: white;
@@ -113,6 +121,7 @@ a:hover {
 
 
 /* Responsive Styles */
+
 @media (max-width: 768px) {
     .container {
         width: 90%;
@@ -157,3 +166,4 @@ a:hover {
         padding: 12px;
     }
 }
+
