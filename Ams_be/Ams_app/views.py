@@ -419,6 +419,9 @@ def leave_list(request):
 
 # View to render the add shift form and process the data
 def add_shift(request):
+    if request.user.role not in ['Admin','HR']:
+        raise PermissionDenied
+    
     if request.method == 'POST':
         # Get form data
         shift_name = request.POST['shift_name']
@@ -439,14 +442,19 @@ def add_shift(request):
     return render(request, 'ams_app/shift/add_shift.html')
 
 @login_required
-@user_passes_test(is_admin_or_hr)
+# @user_passes_test(is_admin_or_hr)
 def shift_list(request):
+    if request.user.role not in ['Admin', 'HR']:
+        raise PermissionDenied
     shifts = Shift.objects.all()  # Display all shifts for Admin/HR
     return render(request, 'ams_app/shift/shift_list.html', {'shifts': shifts})
 
 User = get_user_model()
 
 def allocate_shift(request):
+    if request.user.role not in ['Admin','HR']:
+        raise PermissionDenied
+    
     if request.method == "POST":
         user_id = request.POST.get('user_id')
         shift_id = request.POST.get('shift_id')
@@ -484,6 +492,9 @@ def holiday_list(request):
 
 # Add Holiday
 def add_holiday(request):
+    if request.user.role not in ['Admin','HR']:
+        raise PermissionDenied
+    
     if request.method == "POST":
         holiday_name = request.POST.get('holiday_name')
         start_date = request.POST.get('start_date')
