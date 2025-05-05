@@ -26,3 +26,5 @@ urlpatterns = [
     path('ams/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 
+handler403 = 'Ams_app.views.custom_permission_denied_view'
+

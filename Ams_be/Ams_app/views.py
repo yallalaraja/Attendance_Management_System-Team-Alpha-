@@ -166,6 +166,7 @@ from datetime import date, timedelta
 from django.contrib.auth import login,authenticate,logout,get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect
 from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_POST
@@ -304,7 +305,7 @@ def attendance_status(request):
 @login_required
 def attendance_list(request):
     if request.user.role not in ['Admin', 'HR']:
-        return HttpResponseForbidden()
+        raise PermissionDenied
 
     attendance_records = Attendance.objects.select_related('user').order_by('-date')
 
@@ -509,3 +510,11 @@ def add_holiday(request):
             return redirect('add_holiday')
 
     return render(request, 'ams_app/holiday/add_holiday.html')
+
+
+# error handling 
+from django.shortcuts import render
+
+def custom_permission_denied_view(request, exception=None):
+    return render(request, 'ams_app/errors/403.html', status=403)
+
