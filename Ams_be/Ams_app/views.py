@@ -140,16 +140,14 @@ class HolidayViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrHR]
 
     def perform_create(self, serializer):
-        today = date.today()
-        # Check if today is within any holiday range
-        holiday = Holiday.objects.filter(start_date__lte=today, end_date__gte=today).first()
+        start = serializer.validated_data['start_date']
+        end = serializer.validated_data['end_date']
 
-        if holiday:
-            raise serializers.ValidationError(
-                f"Today is a holiday ({holiday.name}) from {holiday.start_date} to {holiday.end_date}. Your presence will not be added."
-            )
+        if Holiday.objects.filter(start_date__lte=end, end_date__gte=start).exists():
+            raise serializers.ValidationError("Holiday overlaps with an existing one.")
 
-        serializer.save(employee=self.request.user)
+        serializer.save()
+
 
     def get_queryset(self):
         return Holiday.objects.all()
