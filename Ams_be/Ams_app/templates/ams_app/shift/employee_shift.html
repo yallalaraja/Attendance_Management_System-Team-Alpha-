@@ -1,0 +1,13 @@
+{% extends 'ams_app/base.html' %}
+
+{% block content %}
+<h2>Today's Shift Allocation</h2>
+
+{% if employee_shift %}
+    <p><strong>Shift Name:</strong> {{ employee_shift.shift.name }}</p>
+    <p><strong>Start Time:</strong> {{ employee_shift.shift.start_time }}</p>
+    <p><strong>End Time:</strong> {{ employee_shift.shift.end_time }}</p>
+{% else %}
+    <p>You have not been assigned a shift today.</p>
+{% endif %}
+{% endblock %}

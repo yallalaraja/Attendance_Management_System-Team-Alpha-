@@ -24,11 +24,14 @@
                     <li><a href="{% url 'shift_list' %}">Shifts List</a></li>
                     <li><a href="{% url 'shift_allocate' %}">Shift Allocations</a></li>
                     <li><a href="{% url 'add_holiday' %}">Add Holiday</a></li>
+                    <li><a href="{% url 'holiday_list' %}">Holidays List</a></li>
                 {% endif %}
         
                 <li><a href="{% url 'attendance_check' %}">Mark Attendance</a></li>
                 <li><a href="{% url 'attendance_status' %}">Attendance Status</a></li>
                 <li><a href="{% url 'leave_list' %}">Leave Requests</a></li>
+                <li><a href="{% url 'shift_allocate' %}">Shift Allocated</a></li>
+                <li><a href="{% url 'holiday_list' %}">Holidays List</a></li>
                 <li><a href="{% url 'login' %}">Login</a></li>
             </ul>
         </nav>        

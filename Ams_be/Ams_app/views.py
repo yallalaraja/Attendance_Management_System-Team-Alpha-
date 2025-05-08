@@ -457,6 +457,17 @@ def shift_list(request):
 User = get_user_model()
 
 def allocate_shift(request):
+    today = date.today()  # Set today's date or any other logic
+
+    # If Employee, only show their allocation — no shift assignment access
+    if request.user.role == "Employee":
+        assignment = UserShiftAssignment.objects.filter(user=request.user, date=today).select_related('shift').first()
+        context = {
+            'employee_shift': assignment,
+        }
+        return render(request, 'ams_app/shift/employee_shift.html', context)
+    
+    # For admin/HR
     if request.user.role not in ['Admin','HR']:
         raise PermissionDenied
     
@@ -467,7 +478,7 @@ def allocate_shift(request):
         user = User.objects.get(id=user_id)
         shift = Shift.objects.get(id=shift_id)
 
-        today = date.today()  # Set today's date or any other logic
+        
 
         # Create or update shift allocation
         UserShiftAssignment.objects.update_or_create(
