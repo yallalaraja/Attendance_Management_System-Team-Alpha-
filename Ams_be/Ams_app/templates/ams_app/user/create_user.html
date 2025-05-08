@@ -1,37 +1,40 @@
 {% extends 'ams_app/base.html' %}
 {% load static %}
 
+
 {% block content %}
-<h2>Create New User</h2>
+<div class="create-user-container">
+    <h2 class="welcome-heading">Welcome to the Attendance Management System - 2025</h2>
+    <h3>Create New User</h3>
 
-<form method="post">
-    {% csrf_token %}
+    <form method="post">
+        {% csrf_token %}
 
-    <label for="email">Email:</label>
-    <input type="email" name="email" id="email" required><br><br>
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" required><br><br>
 
-    <label for="name">Name:</label>
-    <input type="text" name="name" id="name" required><br><br>
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" required><br><br>
 
-    <label for="role">Role:</label>
-    <select name="role" id="role" required>
-        <option value="Admin">Admin</option>
-        <option value="Manager">Manager</option>
-        <option value="Employee">Employee</option>
-    </select><br><br>
+        <label for="role">Role:</label>
+        <select name="role" id="role" required>
+            <option value="Admin">Admin</option>
+            <option value="Manager">Manager</option>
+            <option value="Employee">Employee</option>
+        </select><br><br>
 
-    <label for="password">Password:</label>
-    <input type="password" name="password" id="password" required><br><br>
+        <label for="password">Password:</label>
+        <input type="password" name="password" id="password" required><br><br>
 
-    <label for="shift">Shift:</label>
-    <select name="shift" id="shift">
-        <option value="">Select Shift</option>
-        {% for shift in shifts %}
-        <option value="{{ shift.id }}">{{ shift.name }} ({{ shift.start_time }} - {{ shift.end_time }})</option>
-        {% endfor %}
-    </select><br><br>
+        <label for="shift">Shift:</label>
+        <select name="shift" id="shift">
+            <option value="">Select Shift</option>
+            {% for shift in shifts %}
+            <option value="{{ shift.id }}">{{ shift.name }} ({{ shift.start_time }} - {{ shift.end_time }})</option>
+            {% endfor %}
+        </select><br><br>
 
-    <button type="submit">Create User</button>
-</form>
-
+        <button type="submit">Create User</button>
+    </form>
+</div>
 {% endblock %}

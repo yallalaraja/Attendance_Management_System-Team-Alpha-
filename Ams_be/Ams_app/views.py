@@ -63,25 +63,29 @@ class AttendanceViewSet(viewsets.ViewSet):
 class AttendanceReportViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrHR]
 
-    def list(self, request, user_id=None):  # Add user_id as a URL parameter
-        if not user_id:
-            return Response({"error": "user_id is required"}, status=400)
+    def list(self, request):
+        return Response({
+            "detail": "Please use /attendances-report/<user_id>/ to retrieve the past 30 days attendance report for a user."
+        })
 
+    def retrieve(self, request, pk=None):  # pk is user_id
         try:
-            employee = User.objects.get(id=user_id)
+            employee = User.objects.get(id=pk)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
 
         end_date = now().date()
         start_date = end_date - timedelta(days=30)
+
         attendance_data = Attendance.objects.filter(user=employee, date__range=(start_date, end_date))
         serializer = AttendanceSerializer(attendance_data, many=True)
         return Response(serializer.data)
 
-# ----- Leave Request Views (All users, access limited) ----- #
+
+# ----- Leave Request Views (All users access limited) ----- #
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
+# from rest_framework import status
 
 class LeaveRequestViewSet(viewsets.ModelViewSet):
     serializer_class = LeaveRequestSerializer
@@ -174,11 +178,14 @@ from django.shortcuts import render, redirect
 
 
 # Utility role checks
-def is_admin_or_hr(user):
-    return user.role in ['Admin', 'HR']
+# def is_admin_or_hr(user):
+#     return user.role in ['Admin', 'HR']
 
 # user views for template
 def create_user(request):
+    if request.user.role not in ['Admin','HR']:
+        raise PermissionDenied
+    
     if request.method == 'POST':
         email = request.POST['email']
         name = request.POST['name']
@@ -194,7 +201,7 @@ def create_user(request):
         return redirect('login')  # Redirect to login page after successful registration
     
     shifts = Shift.objects.all()
-    return render(request, 'ams_app/user/create_user.html', {'shifts': shifts})
+    return render(request, 'ams_app/user/create_user.html', {'shifts': shifts,'hide_nav':True})
 
 
 def login_user(request):
@@ -210,7 +217,7 @@ def login_user(request):
         else:
             messages.error(request, 'Invalid login credentials. Please try again.')
 
-    return render(request, 'ams_app/user/login.html')
+    return render(request, 'ams_app/user/login.html',{'hide_nav':True})
 
 @login_required
 def home_view(request):
@@ -521,7 +528,7 @@ def add_holiday(request):
     return render(request, 'ams_app/holiday/add_holiday.html')
 
 
-# error handling 
+# error handling for non admin users
 from django.shortcuts import render
 
 def custom_permission_denied_view(request, exception=None):

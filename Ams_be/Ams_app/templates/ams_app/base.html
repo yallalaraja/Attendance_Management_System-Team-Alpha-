@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="{% static 'ams_app/styles.css' %}">
 </head>
 <body>
+    {% if not hide_nav %}
     <header>
         <h1>Attendance Management System - 2025</h1>
         <nav>
@@ -25,17 +26,17 @@
                 <li><a href="{% url 'shift_allocate' %}">Shift Allocations</a></li>
                 <li><a href="{% url 'add_holiday' %}">Add Holiday</a></li>
                 <li><a href="{% url 'holiday_list' %}">Holiday List</a></li>
-                <li><a href="{% url 'login' %}">login</a></li>                
+                <li><a href="{% url 'login' %}">Login</a></li>                
             </ul>
         </nav>
     </header>
+    {% endif %}
 
     <div class="content">
         {% block content %}
         {% endblock %}
     </div>
 
-    <!-- Include JS -->
     <script src="{% static 'ams_app/scripts.js' %}"></script>
 </body>
 </html>
