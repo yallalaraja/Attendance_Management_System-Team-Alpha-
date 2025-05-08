@@ -12,9 +12,7 @@ A robust backend system to manage employee attendance, leaves, shifts, and repor
 - Attendance tracking with validations
 - Leave management system with approval flow
 - Shift and Holiday management
-- Filterable reports with pagination
 - Standardized API responses
-- Swagger API documentation
 - End-to-end testing
 
 ---
@@ -24,7 +22,6 @@ A robust backend system to manage employee attendance, leaves, shifts, and repor
 - **Framework**: Django, Django REST Framework
 - **Database**: PostgreSQL
 - **Authentication**: JWT (SimpleJWT)
-- **Docs**: Swagger (drf-yasg)
 - **Testing**: Django Test Framework
 - **Others**: Git, Postman, Pre-commit Hooks
 
@@ -69,6 +66,7 @@ DATABASES = {
 Then run:
 
 ```bash
+python manage.py makemigrations
 python manage.py migrate
 python manage.py createsuperuser
 ```
@@ -93,7 +91,7 @@ python manage.py runserver
 
 | Branch Name           | Description                         | Assigned To  |
 |-----------------------|-------------------------------------|--------------|
-| `dev-setup`           | Django project, DB setup            | Raja         |
+| `main`                | Django project, DB setup            | Raja         |
 | `dev-auth`            | Auth system, login/register, roles  | Kranthi      |
 | `dev-attendance`      | Attendance APIs & logic             | Srikanth     |
 | `dev-leave`           | Leave APIs, approval logic          | Vijitha      |
@@ -104,41 +102,13 @@ python manage.py runserver
 
 ---
 
-## 📄 API Documentation
-
-Access Swagger docs at:
-
-```
-http://localhost:8000/swagger/
-```
-
----
-
-## 📬 Postman
-
-Find the Postman collection at:
-
-```
-docs/postman_collection.json
-```
-
----
-
-## ✅ Final Checklist
-
-- Run tests: `python manage.py test`
-- Ensure clean code: pre-commit hooks
-- All responses follow a standard API format
-
----
-
 ## 👨‍💻 Team Alpha
 
-- **Raja** – Project setup, environment, docs
+- **Raja** – Project setup, environment, docs, frontend 
 - **Kranthi** – Auth, login, roles
 - **Srikanth** – Attendance management
 - **Vijitha** – Leave workflows
 - **Ramu** – Shifts & holidays
-- **Harsha** – Reports, Swagger, testing
+- **Harsha** – Reports,testing,frotend
 
 **Happy coding!** 🚀
