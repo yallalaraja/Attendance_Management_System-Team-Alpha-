@@ -12,12 +12,12 @@ from Ams_app.views import (
 
 # Set up router for viewsets
 router = DefaultRouter()
-router.register(r'users', UserViewSet, basename='user')
+router.register(r'users', UserViewSet)
 router.register(r'attendances', AttendanceViewSet, basename='attendance')
 router.register(r'attendances-report', AttendanceReportViewSet, basename='attendance-report')
 router.register(r'leave-requests', LeaveRequestViewSet, basename='leave-request')
-router.register(r'shifts', ShiftViewSet, basename='shift')
-router.register(r'holidays', HolidayViewSet, basename='holiday')
+router.register(r'shifts', ShiftViewSet)
+router.register(r'holidays', HolidayViewSet)
 
 urlpatterns = [
     # Template-based views (frontend)
