@@ -309,7 +309,7 @@ def attendance_status(request):
 
 @login_required
 def attendance_list(request):
-    if request.user.role not in ['Admin', 'HR']:
+    if request.user.role not in ['Admin', 'Manager']:
         raise PermissionDenied
 
     attendance_records = Attendance.objects.select_related('user').order_by('-date')
@@ -368,7 +368,7 @@ def apply_leave(request):
         return redirect('leave_list')  # Redirect to the leave list or wherever you want
 
     context = {}
-    if request.user.is_superuser or request.user.role in ["Admin", "HR"]:
+    if request.user.is_superuser or request.user.role in ["Admin", "Manager"]:
         context['users'] = User.objects.all()
     
     return render(request, 'ams_app/leave/apply_leave.html', context)
@@ -382,7 +382,7 @@ def approve_leave(request, leave_id):
         messages.error(request, "You cannot approve your own leave request.")
         return redirect('leave_list')  # or wherever you want to redirect
     
-    if request.user.role in ["Admin", "HR"] or request.user.is_superuser:
+    if request.user.role in ["Admin", "Manager"] or request.user.is_superuser:
         leave_request.status = 'Approved'
         leave_request.save()
         messages.success(request, "Leave request approved successfully.")
@@ -399,7 +399,7 @@ def reject_leave(request, leave_id):
         messages.error(request, "You cannot reject your own leave request.")
         return redirect('leave_list')  # or wherever you want to redirect
     
-    if request.user.role in ["Admin", "HR"] or request.user.is_superuser:
+    if request.user.role in ["Admin", "Manager"] or request.user.is_superuser:
         leave_request.status = 'Rejected'
         leave_request.save()
         messages.success(request, "Leave request rejected successfully.")
@@ -412,7 +412,7 @@ def reject_leave(request, leave_id):
 @login_required
 def leave_list(request):
     user = request.user
-    if user.role in ['Admin', 'HR']:
+    if user.role in ['Admin', 'Manager']:
         leaves = LeaveRequest.objects.all()  # Admin/HR sees all leave requests
     else:
         leaves = LeaveRequest.objects.filter(employee=user)  # Employees only see their own leave requests
@@ -424,7 +424,7 @@ def leave_list(request):
 
 # View to render the add shift form and process the data
 def add_shift(request):
-    if request.user.role not in ['Admin','HR']:
+    if request.user.role not in ['Admin','Manager']:
         raise PermissionDenied
     
     if request.method == 'POST':
@@ -449,7 +449,7 @@ def add_shift(request):
 @login_required
 # @user_passes_test(is_admin_or_hr)
 def shift_list(request):
-    if request.user.role not in ['Admin', 'HR']:
+    if request.user.role not in ['Admin', 'Manager']:
         raise PermissionDenied
     shifts = Shift.objects.all()  # Display all shifts for Admin/HR
     return render(request, 'ams_app/shift/shift_list.html', {'shifts': shifts})
@@ -468,7 +468,7 @@ def allocate_shift(request):
         return render(request, 'ams_app/shift/employee_shift.html', context)
     
     # For admin/HR
-    if request.user.role not in ['Admin','HR']:
+    if request.user.role not in ['Admin','Manager']:
         raise PermissionDenied
     
     if request.method == "POST":
@@ -506,7 +506,7 @@ def holiday_list(request):
 
 # Add Holiday
 def add_holiday(request):
-    if request.user.role not in ['Admin','HR']:
+    if request.user.role not in ['Admin','Manager']:
         raise PermissionDenied
     
     if request.method == "POST":
