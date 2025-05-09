@@ -182,9 +182,13 @@ from django.shortcuts import render, redirect
 #     return user.role in ['Admin', 'Manager']
 
 # user views for template
+@login_required(login_url='/login/')
 def create_user(request):
-    if request.user.role not in ['Admin','Manager']:
-        raise PermissionDenied
+    # Check if the logged-in user has the correct role
+    if request.user.role not in ['Admin', 'Manager']:
+        # Send a message and redirect to the login page if the user doesn't have the role
+        messages.error(request, "Only Admins can create users. Please login as an admin.")
+        return redirect('login')  # Redirect to the login page
     
     if request.method == 'POST':
         email = request.POST['email']
@@ -201,8 +205,7 @@ def create_user(request):
         return redirect('login')  # Redirect to login page after successful registration
     
     shifts = Shift.objects.all()
-    return render(request, 'ams_app/user/create_user.html', {'shifts': shifts,'hide_nav':True})
-
+    return render(request, 'ams_app/user/create_user.html', {'shifts': shifts, 'hide_nav': True})
 
 def login_user(request):
     if request.method == 'POST':
