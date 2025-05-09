@@ -21,6 +21,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('ams/', include('Ams_app.urls')),
+    path('',include('Ams_app.urls')),
     # JWT endpoints
     path('ams/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('ams/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

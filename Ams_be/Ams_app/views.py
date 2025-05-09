@@ -478,8 +478,6 @@ def allocate_shift(request):
         user = User.objects.get(id=user_id)
         shift = Shift.objects.get(id=shift_id)
 
-        
-
         # Create or update shift allocation
         UserShiftAssignment.objects.update_or_create(
             user=user,
