@@ -16,9 +16,12 @@
         <nav>
             <ul>
                 <li><a href="{% url 'home' %}">Home</a></li>
+
+                {% if request.user.is_authenticated and request.user.role != "Employee" and request.user.role != "Manager" %}
+                    <li><a href="{% url 'create_user' %}">Create user</a></li>
+                {% endif %}
         
                 {% if request.user.is_authenticated and request.user.role != "Employee" %}
-                    <li><a href="{% url 'create_user' %}">Create user</a></li>
                     <li><a href="{% url 'attendance_list' %}">Attendance List</a></li>
                     <li><a href="{% url 'add_shift' %}">Add Shift</a></li>
                     <li><a href="{% url 'shift_list' %}">Shifts List</a></li>
