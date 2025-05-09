@@ -5,9 +5,9 @@ class IsAdmin(BasePermission):
         return request.user.is_authenticated and request.user.role == 'Admin'
 
 
-class IsHR(BasePermission):
+class IsManager(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'HR'
+        return request.user.is_authenticated and request.user.role == 'Manager'
 
 
 class IsEmployee(BasePermission):
@@ -15,6 +15,6 @@ class IsEmployee(BasePermission):
         return request.user.is_authenticated and request.user.role == 'Employee'
 
 
-class IsAdminOrHR(BasePermission):
+class IsAdminOrManager(BasePermission):
     def has_permission(self, request, view):
-        return hasattr(request.user, 'role') and request.user.role in ['Admin', 'HR']
+        return hasattr(request.user, 'role') and request.user.role in ['Admin', 'Manager']

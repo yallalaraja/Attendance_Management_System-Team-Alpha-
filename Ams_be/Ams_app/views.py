@@ -11,7 +11,7 @@ from .serializers import (
     AttendanceSerializer, LeaveRequestSerializer, ShiftSerializer,
     UserShiftAssignmentSerializer, UserSerializer, HolidaySerializer
 )
-from .permissions import IsAdminOrHR
+from .permissions import IsAdminOrManager
 
 
 # ----- User View ----- #
@@ -22,7 +22,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['Admin', 'HR']:
+        if user.role in ['Admin', 'Manager']:
             return User.objects.all()
         return User.objects.filter(id=user.id)
 
@@ -59,9 +59,9 @@ class AttendanceViewSet(viewsets.ViewSet):
         return Response({"message": "Attendance recorded successfully"}, status=201)
 
 
-# ----- Attendance Report Views (Admin/HR only) ----- #
+# ----- Attendance Report Views (Admin/Manager only) ----- #
 class AttendanceReportViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrHR]
+    permission_classes = [IsAuthenticated, IsAdminOrManager]
 
     def list(self, request):
         return Response({
@@ -93,7 +93,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['Admin', 'HR']:
+        if user.role in ['Admin', 'Manager']:
             return LeaveRequest.objects.all()
         return LeaveRequest.objects.filter(employee=user)
 
@@ -101,12 +101,12 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         serializer.save(employee=self.request.user)
 
     def perform_update(self, serializer):
-        if self.request.user.role in ['Admin', 'HR'] and self.request.data.get('status') == 'Approved':
+        if self.request.user.role in ['Admin', 'Manager'] and self.request.data.get('status') == 'Approved':
             serializer.save(approved_by=self.request.user)
         else:
             serializer.save()
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsAdminOrHR])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsAdminOrManager])
     def approve(self, request, pk=None):
         leave = self.get_object()
         leave.status = 'Approved'
@@ -117,31 +117,31 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=200)
 
 
-# ----- Shift Views (Admin/HR only) ----- #
+# ----- Shift Views (Admin/Manager only) ----- #
 class ShiftViewSet(viewsets.ModelViewSet):
     queryset = Shift.objects.all()
     serializer_class = ShiftSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrHR]
+    permission_classes = [IsAuthenticated, IsAdminOrManager]
 
     def get_queryset(self):
         return Shift.objects.all()
 
 
-# ----- User Shift Assignment Views (Admin/HR only) ----- #
+# ----- User Shift Assignment Views (Admin/Manager only) ----- #
 class UserShiftAssignmentViewSet(viewsets.ModelViewSet):
     queryset = UserShiftAssignment.objects.all()
     serializer_class = UserShiftAssignmentSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrHR]
+    permission_classes = [IsAuthenticated, IsAdminOrManager]
 
     def get_queryset(self):
         return UserShiftAssignment.objects.all()
 
 
-# ----- Holiday Views (Admin/HR only) ----- #
+# ----- Holiday Views (Admin/Manager only) ----- #
 class HolidayViewSet(viewsets.ModelViewSet):
     queryset = Holiday.objects.all()
     serializer_class = HolidaySerializer
-    permission_classes = [IsAuthenticated, IsAdminOrHR]
+    permission_classes = [IsAuthenticated, IsAdminOrManager]
 
     def perform_create(self, serializer):
         start = serializer.validated_data['start_date']
@@ -178,12 +178,12 @@ from django.shortcuts import render, redirect
 
 
 # Utility role checks
-# def is_admin_or_hr(user):
-#     return user.role in ['Admin', 'HR']
+# def is_admin_or_Manager(user):
+#     return user.role in ['Admin', 'Manager']
 
 # user views for template
 def create_user(request):
-    if request.user.role not in ['Admin','HR']:
+    if request.user.role not in ['Admin','Manager']:
         raise PermissionDenied
     
     if request.method == 'POST':
@@ -377,7 +377,7 @@ def apply_leave(request):
 def approve_leave(request, leave_id):
     leave_request = LeaveRequest.objects.get(id=leave_id)
     
-    # Check if the current user is an Admin or HR, and not the employee
+    # Check if the current user is an Admin or Manager, and not the employee
     if request.user == leave_request.employee:
         messages.error(request, "You cannot approve your own leave request.")
         return redirect('leave_list')  # or wherever you want to redirect
@@ -394,7 +394,7 @@ def approve_leave(request, leave_id):
 def reject_leave(request, leave_id):
     leave_request = LeaveRequest.objects.get(id=leave_id)
     
-    # Check if the current user is an Admin or HR, and not the employee
+    # Check if the current user is an Admin or Manager, and not the employee
     if request.user == leave_request.employee:
         messages.error(request, "You cannot reject your own leave request.")
         return redirect('leave_list')  # or wherever you want to redirect
@@ -413,7 +413,7 @@ def reject_leave(request, leave_id):
 def leave_list(request):
     user = request.user
     if user.role in ['Admin', 'Manager']:
-        leaves = LeaveRequest.objects.all()  # Admin/HR sees all leave requests
+        leaves = LeaveRequest.objects.all()  # Admin/Manager sees all leave requests
     else:
         leaves = LeaveRequest.objects.filter(employee=user)  # Employees only see their own leave requests
 
@@ -447,11 +447,11 @@ def add_shift(request):
     return render(request, 'ams_app/shift/add_shift.html')
 
 @login_required
-# @user_passes_test(is_admin_or_hr)
+# @user_passes_test(is_admin_or_Manager)
 def shift_list(request):
     if request.user.role not in ['Admin', 'Manager']:
         raise PermissionDenied
-    shifts = Shift.objects.all()  # Display all shifts for Admin/HR
+    shifts = Shift.objects.all()  # Display all shifts for Admin/Manager
     return render(request, 'ams_app/shift/shift_list.html', {'shifts': shifts})
 
 User = get_user_model()
@@ -467,7 +467,7 @@ def allocate_shift(request):
         }
         return render(request, 'ams_app/shift/employee_shift.html', context)
     
-    # For admin/HR
+    # For admin/Manager
     if request.user.role not in ['Admin','Manager']:
         raise PermissionDenied
     
