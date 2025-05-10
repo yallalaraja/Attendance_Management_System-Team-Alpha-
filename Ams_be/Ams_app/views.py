@@ -115,6 +115,16 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(leave)
         return Response(serializer.data, status=200)
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsAdminOrManager])
+    def reject(self, request, pk=None):
+        leave = self.get_object()
+        leave.status = 'Rejected'
+        leave.approved_by = request.user
+        leave.save()
+
+        serializer = self.get_serializer(leave)
+        return Response(serializer.data, status=200)
 
 
 # ----- Shift Views (Admin/Manager only) ----- #
@@ -123,8 +133,8 @@ class ShiftViewSet(viewsets.ModelViewSet):
     serializer_class = ShiftSerializer
     permission_classes = [IsAuthenticated, IsAdminOrManager]
 
-    def get_queryset(self):
-        return Shift.objects.all()
+    # def get_queryset(self):
+    #     return Shift.objects.all()
 
 
 # ----- User Shift Assignment Views (Admin/Manager only) ----- #
@@ -133,8 +143,8 @@ class UserShiftAssignmentViewSet(viewsets.ModelViewSet):
     serializer_class = UserShiftAssignmentSerializer
     permission_classes = [IsAuthenticated, IsAdminOrManager]
 
-    def get_queryset(self):
-        return UserShiftAssignment.objects.all()
+    # def get_queryset(self):
+    #     return UserShiftAssignment.objects.all()
 
 
 # ----- Holiday Views (Admin/Manager only) ----- #
@@ -153,8 +163,8 @@ class HolidayViewSet(viewsets.ModelViewSet):
         serializer.save()
 
 
-    def get_queryset(self):
-        return Holiday.objects.all()
+    # def get_queryset(self):
+    #     return Holiday.objects.all()
 
 
 
@@ -188,7 +198,7 @@ def create_user(request):
         raise PermissionDenied
     
     # Check if the logged-in user has the correct role
-    if request.user.role not in ['Admin', 'Manager']:
+    if request.user.role not in ['Admin']:
         # Send a message and redirect to the login page if the user doesn't have the role
         messages.info(request, "Only Admins can create users. Please login as an admin.")
         return redirect('login')  # Redirect to the login page
