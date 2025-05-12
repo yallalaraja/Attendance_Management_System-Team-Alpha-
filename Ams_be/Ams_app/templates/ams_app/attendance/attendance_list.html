@@ -2,36 +2,44 @@
 {% load static %}
 
 {% block content %}
-<h2>All Users - Attendance Records</h2>
+<h2>Attendance List</h2>
 
-<table border="1" cellpadding="8" cellspacing="0">
-    <thead>
-        <tr>
-            <th>User</th>
-            <th>Date</th>
-            <th>Check-In Time</th>
-            <th>Check-Out Time</th>
-            <th>Status</th>
-            <th>Duration</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in attendance_records %}
-            {% with record=item.record %}
-            <tr>
-                <td>{{ record.user.name }}</td>
-                <td>{{ record.date }}</td>
-                <td>{{ record.check_in|default:"-" }}</td>
-                <td>{{ record.check_out|default:"-" }}</td>
-                <td>{{ record.status|default:"-" }}</td>
-                <td>{{ item.duration|default:"-" }}</td>
-            </tr>
-            {% endwith %}
-        {% empty %}
-        <tr>
-            <td colspan="6">No attendance records found.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
+<table>
+    <tr>
+        <th>User</th>
+        <th>Date</th>
+        <th>Check In</th>
+        <th>Check Out</th>
+        <th>Duration</th>
+    </tr>
+    {% for record in attendance_records %}
+    <tr>
+        <td>{{ record.record.user.name }}</td>
+        <td>{{ record.record.date }}</td>
+        <td>{{ record.record.check_in }}</td>
+        <td>{{ record.record.check_out }}</td>
+        <td>{{ record.duration }}</td>
+    </tr>
+    {% endfor %}
 </table>
+
+<!-- Pagination Controls -->
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
 {% endblock %}

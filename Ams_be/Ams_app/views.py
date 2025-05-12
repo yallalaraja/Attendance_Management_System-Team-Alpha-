@@ -332,16 +332,30 @@ def attendance_status(request):
 
     return render(request, 'ams_app/attendance/status.html', context)
 
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from django.core.exceptions import PermissionDenied
+from .models import Attendance
+from datetime import datetime
+
 @login_required
 def attendance_list(request):
     if request.user.role not in ['Admin', 'Manager']:
         raise PermissionDenied
 
+    # Get all attendance records and order by date descending
     attendance_records = Attendance.objects.select_related('user').order_by('-date')
+
+    # Create a Paginator object to paginate the attendance records
+    paginator = Paginator(attendance_records, 10)  # Show 10 records per page
+
+    # Get the page number from the request (default is 1)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     # Add duration manually to each record
     records_with_duration = []
-    for record in attendance_records:
+    for record in page_obj.object_list:
         duration = None
         if record.check_in and record.check_out:
             checkin_dt = datetime.combine(record.date, record.check_in)
@@ -353,9 +367,12 @@ def attendance_list(request):
         })
 
     context = {
-        'attendance_records': records_with_duration
+        'attendance_records': records_with_duration,
+        'page_obj': page_obj,  # Add the page object to context
     }
+
     return render(request, 'ams_app/attendance/attendance_list.html', context)
+
 
 # ----- Leave Request Views for templates ----- #
 def apply_leave(request):
