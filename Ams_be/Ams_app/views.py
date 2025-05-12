@@ -179,14 +179,13 @@ from django.contrib.auth import login,authenticate,logout,get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.utils.timezone import now
 from .models import Attendance, LeaveRequest, Shift, UserShiftAssignment, Holiday,User, Shift
 from .forms import UserCreationForm,AttendanceForm,ShiftForm,LeaveRequestForm,HolidayForm
-from django.shortcuts import render, redirect
-
 
 # Utility role checks
 # def is_admin_or_Manager(user):
@@ -334,11 +333,7 @@ def attendance_status(request):
 
     return render(request, 'ams_app/attendance/status.html', context)
 
-from django.core.paginator import Paginator
-from django.shortcuts import render
-from django.core.exceptions import PermissionDenied
-from .models import Attendance
-from datetime import datetime
+
 
 @login_required
 def attendance_list(request):
