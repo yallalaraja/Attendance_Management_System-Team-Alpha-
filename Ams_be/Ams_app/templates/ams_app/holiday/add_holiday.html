@@ -6,18 +6,44 @@
 
 <form method="post">
     {% csrf_token %}
+    
+    <div class="form-group">
+        <label for="{{ form.name.id_for_label }}">Holiday Name:</label>
+        {{ form.name }}
+        {% if form.name.errors %}
+            <div class="form-error">{{ form.name.errors }}</div>
+        {% endif %}
+    </div>
 
-    <label for="holiday_name">Holiday Name:</label>
-    <input type="text" name="holiday_name" id="holiday_name" required><br><br>
+    <div class="form-group">
+        <label for="{{ form.start_date.id_for_label }}">Start Date:</label>
+        <div class="date-picker-wrapper">
+            {{ form.start_date }}
+            <i class="calendar-icon fa fa-calendar"></i>
+        </div>
+        {% if form.start_date.errors %}
+            <div class="form-error">{{ form.start_date.errors }}</div>
+        {% endif %}
+    </div>
 
-    <label for="start_date">Start Date:</label>
-    <input type="date" name="start_date" id="start_date" required><br><br>
+    <div class="form-group">
+        <label for="{{ form.end_date.id_for_label }}">End Date:</label>
+        <div class="date-picker-wrapper">
+            {{ form.end_date }}
+            <i class="calendar-icon fa fa-calendar"></i>
+        </div>
+        {% if form.end_date.errors %}
+            <div class="form-error">{{ form.end_date.errors }}</div>
+        {% endif %}
+    </div>
 
-    <label for="end_date">End Date:</label>
-    <input type="date" name="end_date" id="end_date" required><br><br>
-
-    <label for="description">Description:</label><br>
-    <textarea name="description" id="description" rows="4" cols="50" required></textarea><br><br>
+    <div class="form-group">
+        <label for="{{ form.description.id_for_label }}">Description:</label>
+        {{ form.description }}
+        {% if form.description.errors %}
+            <div class="form-error">{{ form.description.errors }}</div>
+        {% endif %}
+    </div>
 
     <button type="submit">Add Holiday</button>
 </form>

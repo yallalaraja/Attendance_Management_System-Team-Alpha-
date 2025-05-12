@@ -1,8 +1,69 @@
 from django import forms
-from .models import Attendance, LeaveRequest, Shift, Holiday
+from django.forms import DateInput
+from .models import User, Attendance, LeaveRequest, Shift, Holiday
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from datetime import date
 
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['email', 'name', 'role', 'shift', 'password']
+        widgets = {
+            'password': forms.PasswordInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(UserForm, self).__init__(*args, **kwargs)
+        # Customizing form appearance or validation logic if needed
+        self.fields['role'].required = True
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        
+        # Validate email format
+        email_validator = EmailValidator()
+        try:
+            email_validator(email)
+        except ValidationError:
+            raise forms.ValidationError("Please enter a valid email address.")
+
+        # Check if the email already exists
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("A user with this email already exists.")
+        return email
+
+class UserCreationForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['email', 'name', 'role', 'shift', 'password']
+        widgets = {
+            'password': forms.PasswordInput(),
+        }
+
+    def save(self, commit=True):
+        user = super(UserCreationForm, self).save(commit=False)
+        user.set_password(self.cleaned_data["password"])  # Hashing the password
+        if commit:
+            user.save()
+        return user
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+
+        # Validate email format
+        email_validator = EmailValidator()
+        try:
+            email_validator(email)
+        except ValidationError:
+            raise forms.ValidationError("Please enter a valid email address.")
+
+        # Check if the email already exists
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("A user with this email already exists.")
+        return email
+
+    
 # Form for Attendance
 class AttendanceForm(forms.ModelForm):
     class Meta:
@@ -67,18 +128,28 @@ class ShiftForm(forms.ModelForm):
 class HolidayForm(forms.ModelForm):
     class Meta:
         model = Holiday
-        fields = ['name', 'start_date', 'end_date']
+        fields = ['name', 'start_date', 'end_date', 'description']
+
+    start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
 
     def clean_start_date(self):
         start_date = self.cleaned_data.get('start_date')
+
+        # Ensure that the start_date is not before today's date
         if start_date < date.today():
-            raise ValidationError("Holiday start date cannot be in the past.")
+            raise forms.ValidationError("Start date cannot be in the past.")
+
         return start_date
 
     def clean_end_date(self):
         end_date = self.cleaned_data.get('end_date')
         start_date = self.cleaned_data.get('start_date')
 
-        if end_date < start_date:
-            raise ValidationError("Holiday end date cannot be earlier than the start date.")
+        # Ensure that if end_date is provided, it is not before the start_date
+        if end_date and start_date:  # Check if both dates exist
+            if end_date < start_date:
+                raise forms.ValidationError("End date cannot be before the start date.")
+        
         return end_date
+

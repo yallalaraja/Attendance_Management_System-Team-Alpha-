@@ -34,7 +34,7 @@ Requests{% endblock %} {% block content %}
       <td>{{ leave.end_date }}</td>
       <td>{{ leave.status }}</td>
       <td>
-        {% if user.role in 'Admin,HR' %} {% if leave.status == 'Pending' %}
+        {% if user.role in 'Admin,Manager' %} {% if leave.status == 'Pending' %}
         <form method="POST" action="{% url 'approve_leave' leave.id %}">
           {% csrf_token %}
           <button type="submit" class="approve-btn">Approve</button>

@@ -7,8 +7,6 @@
         <h2 class="login-title">Welcome to the Attendance Management System</h2>
         <p class="login-subtitle">Please log in to continue</p>
 
-        
-
         <form method="post">
             {% csrf_token %}
 
@@ -29,15 +27,6 @@
             </p>
         </form>
 
-        {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    <li class="{{ message.tags }}" style="color: red; font-weight: bold;">
-                        {{ message }}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -25,7 +25,9 @@
 </form>
 <hr>
 
-<h3>Current Shift Allocations</h3>
+<h3>Today's Shift Allocations ({{ today }})</h3>
+
+{% if assignments %}
 <table>
     <tr>
         <th>User</th>
@@ -42,4 +44,8 @@
     </tr>
     {% endfor %}
 </table>
+{% else %}
+<p>No shifts allocated for today.</p>
+{% endif %}
+
 {% endblock %}

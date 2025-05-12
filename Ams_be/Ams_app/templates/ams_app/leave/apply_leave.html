@@ -6,8 +6,8 @@
 
 <form method="post" action="">
     {% csrf_token %}
-
-    {% if request.user.is_superuser or request.user.role in "Admin HR" %}
+    
+    {% if request.user.is_superuser or request.user.role == "Admin" or request.user.role == "HR" %}
         <label>Select User:</label>
         <select name="user_id">
             {% for user in users %}
@@ -37,4 +37,15 @@
 
     <button type="submit">Apply</button>
 </form>
+
+{% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+      <div class="message {{ message.tags }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 {% endblock %}

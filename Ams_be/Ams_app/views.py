@@ -184,6 +184,7 @@ from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.utils.timezone import now
 from .models import Attendance, LeaveRequest, Shift, UserShiftAssignment, Holiday,User, Shift
+from .forms import UserCreationForm,AttendanceForm,ShiftForm,LeaveRequestForm,HolidayForm
 from django.shortcuts import render, redirect
 
 
@@ -194,31 +195,39 @@ from django.shortcuts import render, redirect
 # user views for template
 @login_required(login_url='/login/')
 def create_user(request):
-    if request.user.role not in ['Admin']:
-        raise PermissionDenied
-    
-    # Check if the logged-in user has the correct role
-    if request.user.role not in ['Admin']:
-        # Send a message and redirect to the login page if the user doesn't have the role
+    # Check if the logged-in user has the Admin role
+    if request.user.role != 'Admin':
         messages.info(request, "Only Admins can create users. Please login as an admin.")
-        return redirect('login')  # Redirect to the login page
-    
+        return redirect('login')  # Redirect to the login page if the user doesn't have the correct role
+
     if request.method == 'POST':
-        email = request.POST['email']
-        name = request.POST['name']
-        role = request.POST['role']
-        password = request.POST['password']
-        shift_id = request.POST.get('shift')
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            # If the form is valid, create the user
+            email = form.cleaned_data['email']
+            name = form.cleaned_data['name']
+            role = form.cleaned_data['role']
+            password = form.cleaned_data['password']
+            shift = form.cleaned_data['shift']
 
-        shift = Shift.objects.get(id=shift_id) if shift_id else None
+            user = User.objects.create_user(
+                email=email,
+                name=name,
+                role=role,
+                password=password,
+                shift=shift
+            )
+            messages.success(request, f'User {user.name} created successfully!')
+            return redirect('login')  # Redirect to login page after successful registration
+        else:
+            # If the form is invalid, it will automatically show the errors
+            messages.error(request, "There were errors in the form. Please correct them.")
+    else:
+        # If it's a GET request, just initialize an empty form
+        form = UserCreationForm()
 
-        user = User.objects.create_user(email=email, name=name, role=role, password=password, shift=shift)
-        messages.success(request, f'User {user.name} created successfully!')
-
-        return redirect('login')  # Redirect to login page after successful registration
-    
-    shifts = Shift.objects.all()
-    return render(request, 'ams_app/user/create_user.html', {'shifts': shifts, 'hide_nav': True})
+    shifts = Shift.objects.all()  # Get all available shifts
+    return render(request, 'ams_app/user/create_user.html', {'form': form, 'shifts': shifts, 'hide_nav': True})
 
 def login_user(request):
     if request.method == 'POST':
@@ -439,54 +448,59 @@ def leave_list(request):
 # ----- Shift Views for templates ----- #
 
 # View to render the add shift form and process the data
+@login_required
 def add_shift(request):
-    if request.user.role not in ['Admin','Manager']:
+    # Check if the logged-in user has the Admin or Manager role
+    if request.user.role not in ['Admin', 'Manager']:
         raise PermissionDenied
-    
-    if request.method == 'POST':
-        # Get form data
-        shift_name = request.POST['shift_name']
-        start_time = request.POST['start_time']
-        end_time = request.POST['end_time']
-        
-        # Create new shift record
-        new_shift = Shift.objects.create(
-            name=shift_name,
-            start_time=start_time,
-            end_time=end_time
-        )
-        new_shift.save()
 
-        # Redirect to the shift list view after successful creation
-        return redirect('shift_list')  # Adjust 'shift_list' to the appropriate URL name
-    
-    return render(request, 'ams_app/shift/add_shift.html')
+    if request.method == 'POST':
+        form = ShiftForm(request.POST)
+        if form.is_valid():
+            # Create the new shift record if the form is valid
+            new_shift = form.save()  # Save the new Shift object
+
+            messages.success(request, f"Shift '{new_shift.name}' added successfully!")
+            return redirect('shift_list')  # Adjust 'shift_list' to the appropriate URL name
+        else:
+            # If the form is invalid, show the error messages
+            messages.error(request, "There were errors in the form. Please correct them.")
+    else:
+        form = ShiftForm()
+
+    return render(request, 'ams_app/shift/add_shift.html', {'form': form})
 
 @login_required
-# @user_passes_test(is_admin_or_Manager)
 def shift_list(request):
     if request.user.role not in ['Admin', 'Manager']:
         raise PermissionDenied
     shifts = Shift.objects.all()  # Display all shifts for Admin/Manager
     return render(request, 'ams_app/shift/shift_list.html', {'shifts': shifts})
+    
 
 User = get_user_model()
 
+@login_required
 def allocate_shift(request):
-    today = date.today()  # Set today's date or any other logic
+    today = date.today()
 
-    # If Employee, only show their allocation — no shift assignment access
+    # If Employee, only show their own shift allocation
     if request.user.role == "Employee":
-        assignment = UserShiftAssignment.objects.filter(user=request.user, date=today).select_related('shift').first()
+        assignment = UserShiftAssignment.objects.filter(
+            user=request.user,
+            date=today
+        ).select_related('shift').first()
+
         context = {
             'employee_shift': assignment,
+            'today': today
         }
         return render(request, 'ams_app/shift/employee_shift.html', context)
-    
-    # For admin/Manager
-    if request.user.role not in ['Admin','Manager']:
+
+    # Only Admins and Managers allowed
+    if request.user.role not in ['Admin', 'Manager']:
         raise PermissionDenied
-    
+
     if request.method == "POST":
         user_id = request.POST.get('user_id')
         shift_id = request.POST.get('shift_id')
@@ -494,7 +508,7 @@ def allocate_shift(request):
         user = User.objects.get(id=user_id)
         shift = Shift.objects.get(id=shift_id)
 
-        # Create or update shift allocation
+        # Create or update today's shift allocation
         UserShiftAssignment.objects.update_or_create(
             user=user,
             date=today,
@@ -502,13 +516,16 @@ def allocate_shift(request):
         )
 
         messages.success(request, f"Shift '{shift.name}' allocated to {user.name} successfully!")
+        return redirect('shift_allocate')
 
-        return redirect('shift_allocate')  # Use the correct URL name
+    # Get only today's assignments
+    assignments = UserShiftAssignment.objects.filter(date=today).select_related('user', 'shift')
 
     context = {
         'users': User.objects.all(),
         'shifts': Shift.objects.all(),
-        'assignments': UserShiftAssignment.objects.select_related('user', 'shift'),
+        'assignments': assignments,
+        'today': today
     }
     return render(request, 'ams_app/shift/allocate_shift.html', context)
 
@@ -521,36 +538,24 @@ def holiday_list(request):
     return render(request, 'ams_app/holiday/holiday_list.html', {'holidays': holidays})
 
 # Add Holiday
+@login_required
 def add_holiday(request):
-    if request.user.role not in ['Admin','Manager']:
+    if request.user.role not in ['Admin', 'Manager']:
         raise PermissionDenied
-    
+
     if request.method == "POST":
-        holiday_name = request.POST.get('holiday_name')
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
-        description = request.POST.get('description')
-
-        if holiday_name and start_date and end_date and description:
-            try:
-                # Create the Holiday object correctly
-                holiday = Holiday.objects.create(
-                    name=holiday_name,
-                    start_date=start_date,
-                    end_date=end_date,
-                    description=description
-                )
-                messages.success(request, "Holiday added successfully!")
-            except Exception as e:
-                messages.error(request, f"Error: {e}")
-                return redirect('add_holiday')
-
-            return redirect('holiday_list')  # Redirect to the holiday list page
+        form = HolidayForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Holiday added successfully!")
+            return redirect('holiday_list')
         else:
-            messages.error(request, "All fields are required.")
-            return redirect('add_holiday')
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = HolidayForm()
 
-    return render(request, 'ams_app/holiday/add_holiday.html')
+    return render(request, 'ams_app/holiday/add_holiday.html', {'form': form})
+
 
 
 # error handling for non admin users
