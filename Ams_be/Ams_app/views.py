@@ -195,6 +195,8 @@ from django.shortcuts import render, redirect
 # user views for template
 @login_required(login_url='/login/')
 def create_user(request):
+    if request.user.role not in ['Admin']:
+        raise PermissionDenied
     # Check if the logged-in user has the Admin role
     if request.user.role != 'Admin':
         messages.info(request, "Only Admins can create users. Please login as an admin.")
