@@ -1,67 +1,54 @@
 from django import forms
-from django.forms import DateInput
+from django.forms import PasswordInput
 from .models import User, Attendance, LeaveRequest, Shift, Holiday
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
+from django.contrib.auth.password_validation import validate_password
 from datetime import date
 
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['email', 'name', 'role', 'shift', 'password']
-        widgets = {
-            'password': forms.PasswordInput(),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(UserForm, self).__init__(*args, **kwargs)
-        # Customizing form appearance or validation logic if needed
-        self.fields['role'].required = True
+        widgets = {'password': PasswordInput()}
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        
-        # Validate email format
-        email_validator = EmailValidator()
-        try:
-            email_validator(email)
-        except ValidationError:
-            raise forms.ValidationError("Please enter a valid email address.")
-
-        # Check if the email already exists
+        EmailValidator()(email)
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("A user with this email already exists.")
         return email
+
+    def clean_password(self):
+        password = self.cleaned_data.get("password")
+        validate_password(password)
+        return password
+
 
 class UserCreationForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['email', 'name', 'role', 'shift', 'password']
-        widgets = {
-            'password': forms.PasswordInput(),
-        }
-
-    def save(self, commit=True):
-        user = super(UserCreationForm, self).save(commit=False)
-        user.set_password(self.cleaned_data["password"])  # Hashing the password
-        if commit:
-            user.save()
-        return user
+        widgets = {'password': PasswordInput()}
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-
-        # Validate email format
-        email_validator = EmailValidator()
-        try:
-            email_validator(email)
-        except ValidationError:
-            raise forms.ValidationError("Please enter a valid email address.")
-
-        # Check if the email already exists
+        EmailValidator()(email)
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("A user with this email already exists.")
         return email
+
+    def clean_password(self):
+        password = self.cleaned_data.get("password")
+        validate_password(password)
+        return password
+
+    def save(self, commit=True):
+        user = super(UserCreationForm, self).save(commit=False)
+        user.set_password(self.cleaned_data["password"])
+        if commit:
+            user.save()
+        return user
 
     
 # Form for Attendance
