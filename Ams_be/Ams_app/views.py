@@ -388,8 +388,13 @@ def apply_leave(request):
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except ValueError:
             messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
-            return redirect('apply_leave')  # or the relevant URL
+            return redirect('apply_leave')
         
+        # Validate that the start date is not before the today date
+        if start_date.date() < date.today():
+            messages.error(request, "Start date cannot be before the today date.")
+            return redirect('apply_leave')
+
         # Validate that the end date is not before the start date
         if end_date < start_date:
             messages.error(request, "End date cannot be before the start date.")
