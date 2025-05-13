@@ -97,11 +97,6 @@ class ShiftForm(forms.ModelForm):
         model = Shift
         fields = ['name', 'start_time', 'end_time']
 
-    def clean_start_time(self):
-        start_time = self.cleaned_data.get('start_time')
-        if start_time < date.today():
-            raise ValidationError("Start time cannot be in the past.")
-        return start_time
 
     def clean_end_time(self):
         end_time = self.cleaned_data.get('end_time')
