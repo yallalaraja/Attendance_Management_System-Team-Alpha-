@@ -21,6 +21,7 @@ router.register(r'holidays', HolidayViewSet)
 
 urlpatterns = [
     # Template-based views (frontend)
+    path('', views.landing_page, name='landing_page'),
     path('home/', views.home_view, name='home'),
 
     path('user/create/', views.create_user, name='create_user'),

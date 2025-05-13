@@ -187,9 +187,9 @@ from django.utils.timezone import now
 from .models import Attendance, LeaveRequest, Shift, UserShiftAssignment, Holiday,User, Shift
 from .forms import UserCreationForm,AttendanceForm,ShiftForm,LeaveRequestForm,HolidayForm
 
-# Utility role checks
-# def is_admin_or_Manager(user):
-#     return user.role in ['Admin', 'Manager']
+# landing page view
+def landing_page(request):
+    return render(request, 'ams_app/landing_page.html')
 
 # user views for template
 @login_required(login_url='/login/')
