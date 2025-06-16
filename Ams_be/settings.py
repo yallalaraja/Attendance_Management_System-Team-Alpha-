@@ -84,7 +84,7 @@ DATABASES = {
         'NAME': 'Ams_db',
         'USER': 'Ams_user',
         'PASSWORD': '12345678',
-        'HOST': 'localhost',
+        'HOST': 'ams-db-instance.cqjuiiwi6fix.us-east-1.rds.amazonaws.com',
         'PORT': 5432
     }
 }
@@ -126,7 +126,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'ams_app/static',  # Add this line
+    BASE_DIR / 'static',  # Add this line
 ]
 
 # Default primary key field type
@@ -149,3 +149,4 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),  # or hours, minutes, etc.
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
 }
+
